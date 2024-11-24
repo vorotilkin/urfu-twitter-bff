@@ -9,7 +9,7 @@ servers:
     description: Local server
 
 paths:
-  /users:
+  /register:
     post:
       summary: Create a new user
       operationId: createUser
@@ -29,6 +29,36 @@ paths:
                 $ref: '#/components/schemas/UserResponse'
         '400':
           description: Invalid input
+  /login:
+    post:
+      summary: Authenticate user
+      operationId: login
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                email:
+                  type: string
+                  format: email
+                  example: user@example.com
+                password:
+                  type: string
+                  format: password
+                  example: password123
+      responses:
+        '200':
+          description: Successful login
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/JWTResponse'
+        '401':
+          description: Invalid credentials
+
+
 #    get:
 #      summary: List all users
 #      operationId: listUsers
@@ -164,3 +194,10 @@ components:
           type: string
           format: email
           description: Email address of the user
+    JWTResponse:
+      type: object
+      required: [accessToken]
+      properties:
+        accessToken:
+          type: string
+          description: JWT access token

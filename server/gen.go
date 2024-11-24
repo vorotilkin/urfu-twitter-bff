@@ -8,6 +8,12 @@ import (
 	openapi_types "github.com/oapi-codegen/runtime/types"
 )
 
+// JWTResponse defines model for JWTResponse.
+type JWTResponse struct {
+	// AccessToken JWT access token
+	AccessToken string `json:"accessToken"`
+}
+
 // UserCreateRequest defines model for UserCreateRequest.
 type UserCreateRequest struct {
 	// Email Email address of the user
@@ -38,19 +44,40 @@ type UserResponse struct {
 	Username *string `json:"username,omitempty"`
 }
 
+// LoginJSONBody defines parameters for Login.
+type LoginJSONBody struct {
+	Email    *openapi_types.Email `json:"email,omitempty"`
+	Password *string              `json:"password,omitempty"`
+}
+
+// LoginJSONRequestBody defines body for Login for application/json ContentType.
+type LoginJSONRequestBody LoginJSONBody
+
 // CreateUserJSONRequestBody defines body for CreateUser for application/json ContentType.
 type CreateUserJSONRequestBody = UserCreateRequest
 
 // ServerInterface represents all server handlers.
 type ServerInterface interface {
+	// Authenticate user
+	// (POST /login)
+	Login(ctx echo.Context) error
 	// Create a new user
-	// (POST /users)
+	// (POST /register)
 	CreateUser(ctx echo.Context) error
 }
 
 // ServerInterfaceWrapper converts echo contexts to parameters.
 type ServerInterfaceWrapper struct {
 	Handler ServerInterface
+}
+
+// Login converts echo context to params.
+func (w *ServerInterfaceWrapper) Login(ctx echo.Context) error {
+	var err error
+
+	// Invoke the callback with all the unmarshaled arguments
+	err = w.Handler.Login(ctx)
+	return err
 }
 
 // CreateUser converts echo context to params.
@@ -90,6 +117,7 @@ func RegisterHandlersWithBaseURL(router EchoRouter, si ServerInterface, baseURL 
 		Handler: si,
 	}
 
-	router.POST(baseURL+"/users", wrapper.CreateUser)
+	router.POST(baseURL+"/login", wrapper.Login)
+	router.POST(baseURL+"/register", wrapper.CreateUser)
 
 }
