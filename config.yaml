@@ -1,0 +1,8 @@
+http:
+  server:
+    addr: "localhost:8080"
+
+grpc:
+  client:
+    users:
+      address: "localhost:50051"
