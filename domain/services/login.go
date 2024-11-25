@@ -9,8 +9,6 @@ import (
 	"twitter-bff/helpers"
 )
 
-var ErrUserNotFound = errors.New("user not found")
-
 type LoginRepository interface {
 	FetchPasswordHashByEmail(ctx context.Context, email string) (string, error)
 }
