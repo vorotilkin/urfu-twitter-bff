@@ -11,8 +11,8 @@ type Repository struct {
 	client *grpc.Client
 }
 
-func (r *Repository) ExistByUserAndPasswordHash(_ context.Context, username string, passwordHash string) (bool, error) {
-	return true, nil
+func (r *Repository) FetchPasswordHashByEmail(ctx context.Context, email string) (string, error) {
+	return "$2a$10$aYJY7amQ8eUjtN0Bbafxi.hXP9yHwjiXnQfmLLI0XYkwJd2CWJvtK", nil
 }
 
 func (r *Repository) Create(ctx context.Context, name, passwordHash, username, email string) (models.User, error) {

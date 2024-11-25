@@ -42,7 +42,7 @@ func (s *EchoServer) Login(echoCtx echo.Context) error {
 
 	token, err := s.loginSvc.Login(context.Background(), string(lo.FromPtr(req.Email)), lo.FromPtr(req.Password))
 	if err != nil {
-		return echoCtx.JSON(http.StatusUnprocessableEntity, errors.Wrap(err, "cant create token"))
+		return echoCtx.JSON(http.StatusUnprocessableEntity, errors.Wrap(err, "cant create token").Error())
 	}
 
 	return echoCtx.JSON(http.StatusOK, server.JWTResponse{

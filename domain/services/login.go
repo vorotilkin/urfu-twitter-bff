@@ -12,7 +12,7 @@ import (
 var ErrUserNotFound = errors.New("user not found")
 
 type LoginRepository interface {
-	ExistByUserAndPasswordHash(ctx context.Context, username string, passwordHash string) (bool, error)
+	FetchPasswordHashByEmail(ctx context.Context, email string) (string, error)
 }
 
 type Config struct {
@@ -25,17 +25,14 @@ type LoginService struct {
 }
 
 func (s *LoginService) Login(ctx context.Context, email, password string) (models.JWTToken, error) {
-	hash, err := helpers.GenerateHash(password)
+	hash, err := s.repo.FetchPasswordHashByEmail(ctx, email)
 	if err != nil {
-		return models.JWTToken{}, err
+		return models.JWTToken{}, errors.Wrap(err, "failed to fetch password hash")
 	}
 
-	exist, err := s.repo.ExistByUserAndPasswordHash(ctx, email, hash)
+	err = helpers.CompareHashAndPassword(hash, password)
 	if err != nil {
-		return models.JWTToken{}, errors.Wrap(err, "failed to check existence of user")
-	}
-	if !exist {
-		return models.JWTToken{}, ErrUserNotFound
+		return models.JWTToken{}, errors.Wrap(err, "failed to compare password hash")
 	}
 
 	// Генерируем полезные данные, которые будут храниться в токене
