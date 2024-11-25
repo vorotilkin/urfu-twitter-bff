@@ -2,6 +2,7 @@ package usecases
 
 import (
 	"context"
+	"github.com/golang-jwt/jwt/v5"
 	"github.com/labstack/echo/v4"
 	openapi_types "github.com/oapi-codegen/runtime/types"
 	"github.com/pkg/errors"
@@ -14,6 +15,18 @@ import (
 type EchoServer struct {
 	createSvc *services.CreateUserService
 	loginSvc  *services.LoginService
+}
+
+func (s *EchoServer) GetUser(echoCtx echo.Context, id string) error {
+	token, ok := echoCtx.Get("user").(*jwt.Token) // by default token is stored under `user` key
+	if !ok {
+		return errors.New("JWT token missing or invalid")
+	}
+	claims, ok := token.Claims.(jwt.MapClaims) // by default claims is of type `jwt.MapClaims`
+	if !ok {
+		return errors.New("failed to cast claims as jwt.MapClaims")
+	}
+	return echoCtx.JSON(http.StatusOK, claims)
 }
 
 func (s *EchoServer) Login(echoCtx echo.Context) error {
@@ -67,6 +80,6 @@ func (s *EchoServer) CreateUser(echoCtx echo.Context) error {
 	return echoCtx.JSON(http.StatusCreated, response)
 }
 
-func NewEchoServer(createSvc *services.CreateUserService) *EchoServer {
-	return &EchoServer{createSvc: createSvc}
+func NewEchoServer(createSvc *services.CreateUserService, loginSvc *services.LoginService) *EchoServer {
+	return &EchoServer{createSvc: createSvc, loginSvc: loginSvc}
 }

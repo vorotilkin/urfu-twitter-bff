@@ -4,11 +4,14 @@ import (
 	"context"
 	"twitter-bff/domain/models"
 	"twitter-bff/helpers"
-	"twitter-bff/infrastructure/users"
 )
 
+type CreateRepository interface {
+	Create(ctx context.Context, name string, passwordHash string, username string, email string) (models.User, error)
+}
+
 type CreateUserService struct {
-	repo *users.Repository
+	repo CreateRepository
 }
 
 func (s *CreateUserService) Create(ctx context.Context, name, password, username, email string) (models.User, error) {
@@ -20,6 +23,6 @@ func (s *CreateUserService) Create(ctx context.Context, name, password, username
 	return s.repo.Create(ctx, name, hash, username, email)
 }
 
-func NewCreateUserService(repo *users.Repository) *CreateUserService {
+func NewCreateUserService(repo CreateRepository) *CreateUserService {
 	return &CreateUserService{repo: repo}
 }

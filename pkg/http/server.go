@@ -128,7 +128,15 @@ func NewServer(config Config, v *validator.Validate, logger *zap.Logger) *Server
 		HandleError: true,
 	}))
 	s.Use(middleware.Recover())
-	s.Use(echojwt.WithConfig(echojwt.Config{SigningKey: []byte(config.SecretKey)}))
+	s.Use(echojwt.WithConfig(echojwt.Config{
+		Skipper: func(c echo.Context) bool {
+			if c.Path() == "/login" || c.Path() == "/register" {
+				return true
+			}
+			return false
+		},
+		SigningKey: []byte(config.SecretKey),
+	}))
 	s.Validator = &customValidator{validator: v}
 
 	return &Server{

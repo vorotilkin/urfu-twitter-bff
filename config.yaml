@@ -6,3 +6,6 @@ grpc:
   client:
     users:
       address: "localhost:50051"
+
+jwt:
+  secret: secret_key

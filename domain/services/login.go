@@ -47,7 +47,7 @@ func (s *LoginService) Login(ctx context.Context, email, password string) (model
 	// Создаем новый JWT-токен и подписываем его по алгоритму HS256
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, payload)
 
-	signedString, err := token.SignedString(s.config.SecretKey)
+	signedString, err := token.SignedString([]byte(s.config.SecretKey))
 	if err != nil {
 		return models.JWTToken{}, errors.Wrap(err, "failed to sign JWT")
 	}

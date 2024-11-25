@@ -26,6 +26,9 @@ type config struct {
 			}
 		}
 	}
+	Jwt struct {
+		Secret string
+	}
 }
 
 func newConfig(configuration *configuration.Configuration) (*config, error) {
@@ -49,13 +52,27 @@ func main() {
 		fx.Provide(newConfig),
 		fx.Provide(validator.New),
 		fx.Provide(func(c *config) http.Config {
-			return c.Http.Server
+			return http.Config{
+				Addr:      c.Http.Server.Addr,
+				SecretKey: c.Jwt.Secret,
+			}
+		}),
+		fx.Provide(func(c *config) services.Config {
+			return services.Config{
+				SecretKey: c.Jwt.Secret,
+			}
 		}),
 		fx.Provide(fx.Annotate(func(c *config) grpc.Config { return grpc.Config{Address: c.Grpc.Client.Users.Address} },
 			fx.ResultTags(`name:"usersConfig"`))),
 		fx.Provide(fx.Annotate(grpc.NewClient, fx.ParamTags(`name:"usersConfig"`), fx.ResultTags(`name:"usersProvider"`))),
-		fx.Provide(fx.Annotate(users.NewRepository, fx.ParamTags(`name:"usersProvider"`))),
+		fx.Provide(fx.Annotate(
+			users.NewRepository,
+			fx.ParamTags(`name:"usersProvider"`),
+			fx.As(new(services.LoginRepository)),
+			fx.As(new(services.CreateRepository)),
+		)),
 		fx.Provide(services.NewCreateUserService),
+		fx.Provide(services.NewLoginService),
 		fx.Provide(usecases.NewEchoServer),
 		fx.Invoke(func(lc fx.Lifecycle, server *http.Server) {
 			lc.Append(fx.Hook{
