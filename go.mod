@@ -12,7 +12,7 @@ require (
 	github.com/pkg/errors v0.9.1
 	github.com/samber/lo v1.47.0
 	github.com/spf13/viper v1.19.0
-	github.com/vorotilkin/twitter-users v0.0.0-20241123195009-10ab110ff44d
+	github.com/vorotilkin/twitter-users v1.0.0
 	go.uber.org/fx v1.23.0
 	go.uber.org/zap v1.27.0
 	golang.org/x/crypto v0.27.0

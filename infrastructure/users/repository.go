@@ -2,6 +2,7 @@ package users
 
 import (
 	"context"
+	"github.com/pkg/errors"
 	"github.com/vorotilkin/twitter-users/proto"
 	"twitter-bff/domain/models"
 	"twitter-bff/pkg/grpc"
@@ -12,7 +13,16 @@ type Repository struct {
 }
 
 func (r *Repository) FetchPasswordHashByEmail(ctx context.Context, email string) (string, error) {
-	return "$2a$10$aYJY7amQ8eUjtN0Bbafxi.hXP9yHwjiXnQfmLLI0XYkwJd2CWJvtK", nil
+	client := proto.NewUsersClient(r.client.Connection())
+
+	req := proto.PasswordHashByEmailRequest{Email: email}
+
+	response, err := client.PasswordHashByEmail(ctx, &req)
+	if err != nil {
+		return "", errors.Wrap(err, "FetchPasswordHashByEmail")
+	}
+
+	return response.GetPasswordHash(), nil
 }
 
 func (r *Repository) Create(ctx context.Context, name, passwordHash, username, email string) (models.User, error) {
