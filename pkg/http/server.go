@@ -3,6 +3,7 @@ package http
 import (
 	"context"
 	"github.com/go-playground/validator/v10"
+	"github.com/labstack/echo-jwt/v4"
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
 	"github.com/samber/lo"
@@ -19,7 +20,8 @@ type HandlerFunc func(Context) error
 type MiddlewareFunc func(HandlerFunc) HandlerFunc
 
 type Config struct {
-	Addr string
+	Addr      string
+	SecretKey string
 }
 
 type Server struct {
@@ -126,6 +128,7 @@ func NewServer(config Config, v *validator.Validate, logger *zap.Logger) *Server
 		HandleError: true,
 	}))
 	s.Use(middleware.Recover())
+	s.Use(echojwt.WithConfig(echojwt.Config{SigningKey: []byte(config.SecretKey)}))
 	s.Validator = &customValidator{validator: v}
 
 	return &Server{

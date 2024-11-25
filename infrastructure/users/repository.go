@@ -11,6 +11,10 @@ type Repository struct {
 	client *grpc.Client
 }
 
+func (r *Repository) ExistByUserAndPasswordHash(_ context.Context, username string, passwordHash string) (bool, error) {
+	return true, nil
+}
+
 func (r *Repository) Create(ctx context.Context, name, passwordHash, username, email string) (models.User, error) {
 	client := proto.NewUsersClient(r.client.Connection())
 

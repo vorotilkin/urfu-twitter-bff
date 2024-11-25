@@ -4,6 +4,7 @@ import (
 	"context"
 	"github.com/labstack/echo/v4"
 	openapi_types "github.com/oapi-codegen/runtime/types"
+	"github.com/pkg/errors"
 	"github.com/samber/lo"
 	"net/http"
 	"twitter-bff/domain/services"
@@ -12,10 +13,28 @@ import (
 
 type EchoServer struct {
 	createSvc *services.CreateUserService
+	loginSvc  *services.LoginService
 }
 
-func NewEchoServer(createSvc *services.CreateUserService) *EchoServer {
-	return &EchoServer{createSvc: createSvc}
+func (s *EchoServer) Login(echoCtx echo.Context) error {
+	req := &server.LoginJSONBody{}
+
+	if err := echoCtx.Bind(req); err != nil {
+		return echoCtx.JSON(http.StatusUnprocessableEntity, err.Error())
+	}
+
+	if req.Email == nil || req.Password == nil {
+		return echoCtx.JSON(http.StatusUnprocessableEntity, "email or password is empty")
+	}
+
+	token, err := s.loginSvc.Login(context.Background(), string(lo.FromPtr(req.Email)), lo.FromPtr(req.Password))
+	if err != nil {
+		return echoCtx.JSON(http.StatusUnprocessableEntity, errors.Wrap(err, "cant create token"))
+	}
+
+	return echoCtx.JSON(http.StatusOK, server.JWTResponse{
+		AccessToken: token.Token,
+	})
 }
 
 func (s *EchoServer) CreateUser(echoCtx echo.Context) error {
@@ -46,4 +65,8 @@ func (s *EchoServer) CreateUser(echoCtx echo.Context) error {
 	}
 
 	return echoCtx.JSON(http.StatusCreated, response)
+}
+
+func NewEchoServer(createSvc *services.CreateUserService) *EchoServer {
+	return &EchoServer{createSvc: createSvc}
 }
