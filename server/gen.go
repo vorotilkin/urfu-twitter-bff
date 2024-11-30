@@ -65,6 +65,9 @@ type ServerInterface interface {
 	// Authenticate user
 	// (POST /login)
 	Login(ctx echo.Context) error
+	// Logout user
+	// (POST /logout)
+	Logout(ctx echo.Context) error
 	// Create a new user
 	// (POST /register)
 	CreateUser(ctx echo.Context) error
@@ -87,6 +90,15 @@ func (w *ServerInterfaceWrapper) Login(ctx echo.Context) error {
 
 	// Invoke the callback with all the unmarshaled arguments
 	err = w.Handler.Login(ctx)
+	return err
+}
+
+// Logout converts echo context to params.
+func (w *ServerInterfaceWrapper) Logout(ctx echo.Context) error {
+	var err error
+
+	// Invoke the callback with all the unmarshaled arguments
+	err = w.Handler.Logout(ctx)
 	return err
 }
 
@@ -153,6 +165,7 @@ func RegisterHandlersWithBaseURL(router EchoRouter, si ServerInterface, baseURL 
 	}
 
 	router.POST(baseURL+"/login", wrapper.Login)
+	router.POST(baseURL+"/logout", wrapper.Logout)
 	router.POST(baseURL+"/register", wrapper.CreateUser)
 	router.GET(baseURL+"/user/current", wrapper.GetCurrentUser)
 	router.GET(baseURL+"/users/:id", wrapper.GetUser)

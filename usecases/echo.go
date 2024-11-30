@@ -9,6 +9,7 @@ import (
 	"github.com/samber/lo"
 	"net/http"
 	"strconv"
+	"time"
 	"twitter-bff/domain/models"
 	"twitter-bff/domain/services"
 	"twitter-bff/server"
@@ -18,6 +19,23 @@ type EchoServer struct {
 	createSvc      *services.CreateUserService
 	loginSvc       *services.LoginService
 	currentUserSvc *services.UserByIDService
+}
+
+func (s *EchoServer) Logout(echoCtx echo.Context) error {
+	// Создаём cookie с пустым значением и временем истечения в прошлом
+	cookie := &http.Cookie{
+		Name:     models.JWTCookieName, // Имя куки, где хранится JWT токен
+		Value:    "",                   // Очищаем значение
+		Expires:  time.Unix(0, 0),      // Устанавливаем время истечения в прошлом
+		HttpOnly: true,                 // Сохраняем HttpOnly, чтобы обезопасить куки
+		Secure:   false,                // Убедитесь, что Secure соответствует вашим настройкам (true для HTTPS)
+	}
+
+	echoCtx.SetCookie(cookie)
+
+	return echoCtx.JSON(http.StatusOK, map[string]string{
+		"message": "Successfully logged out",
+	})
 }
 
 func (s *EchoServer) GetCurrentUser(echoCtx echo.Context) error {
