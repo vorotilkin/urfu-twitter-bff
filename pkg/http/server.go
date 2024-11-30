@@ -3,7 +3,6 @@ package http
 import (
 	"context"
 	"github.com/go-playground/validator/v10"
-	"github.com/labstack/echo-jwt/v4"
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
 	"github.com/samber/lo"
@@ -128,15 +127,7 @@ func NewServer(config Config, v *validator.Validate, logger *zap.Logger) *Server
 		HandleError: true,
 	}))
 	s.Use(middleware.Recover())
-	s.Use(echojwt.WithConfig(echojwt.Config{
-		Skipper: func(c echo.Context) bool {
-			if c.Path() == "/login" || c.Path() == "/register" {
-				return true
-			}
-			return false
-		},
-		SigningKey: []byte(config.SecretKey),
-	}))
+	s.Use(JwtCookieMiddleware(config.SecretKey, "/api/login", "/api/register"))
 	s.Validator = &customValidator{validator: v}
 
 	return &Server{

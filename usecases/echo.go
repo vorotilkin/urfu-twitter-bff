@@ -8,25 +8,42 @@ import (
 	"github.com/pkg/errors"
 	"github.com/samber/lo"
 	"net/http"
+	"strconv"
+	"twitter-bff/domain/models"
 	"twitter-bff/domain/services"
 	"twitter-bff/server"
 )
 
 type EchoServer struct {
-	createSvc *services.CreateUserService
-	loginSvc  *services.LoginService
+	createSvc      *services.CreateUserService
+	loginSvc       *services.LoginService
+	currentUserSvc *services.UserByIDService
+}
+
+func (s *EchoServer) GetCurrentUser(echoCtx echo.Context) error {
+	jUser, err := checkAuth(echoCtx)
+	if err != nil {
+		return echoCtx.JSON(http.StatusUnauthorized, err.Error())
+	}
+
+	user, err := s.currentUserSvc.UserByID(context.Background(), jUser.UserID)
+	if errors.Is(err, models.ErrNotFound) {
+		return echoCtx.JSON(http.StatusNotFound, err.Error())
+	}
+	if err != nil {
+		return echoCtx.JSON(http.StatusInternalServerError, err.Error())
+	}
+
+	return echoCtx.JSON(http.StatusOK, user)
 }
 
 func (s *EchoServer) GetUser(echoCtx echo.Context, id string) error {
-	token, ok := echoCtx.Get("user").(*jwt.Token) // by default token is stored under `user` key
-	if !ok {
-		return errors.New("JWT token missing or invalid")
-	}
-	claims, ok := token.Claims.(jwt.MapClaims) // by default claims is of type `jwt.MapClaims`
+	token, ok := echoCtx.Get("user").(jwt.MapClaims) // by default token is stored under `user` key
 	if !ok {
 		return errors.New("failed to cast claims as jwt.MapClaims")
 	}
-	return echoCtx.JSON(http.StatusOK, claims)
+
+	return echoCtx.JSON(http.StatusOK, token)
 }
 
 func (s *EchoServer) Login(echoCtx echo.Context) error {
@@ -44,6 +61,13 @@ func (s *EchoServer) Login(echoCtx echo.Context) error {
 	if err != nil {
 		return echoCtx.JSON(http.StatusUnprocessableEntity, errors.Wrap(err, "cant create token").Error())
 	}
+
+	cookie := new(http.Cookie)
+	cookie.HttpOnly = true
+	cookie.Name = models.JWTCookieName
+	cookie.Value = token.Token
+
+	echoCtx.SetCookie(cookie)
 
 	return echoCtx.JSON(http.StatusOK, server.JWTResponse{
 		AccessToken: token.Token,
@@ -80,6 +104,50 @@ func (s *EchoServer) CreateUser(echoCtx echo.Context) error {
 	return echoCtx.JSON(http.StatusCreated, response)
 }
 
-func NewEchoServer(createSvc *services.CreateUserService, loginSvc *services.LoginService) *EchoServer {
-	return &EchoServer{createSvc: createSvc, loginSvc: loginSvc}
+func jwtUser(echoCtx echo.Context) (models.JWTUser, error) {
+	mapClaims, ok := echoCtx.Get("user").(jwt.MapClaims) // by default token is stored under `user` key
+	if !ok {
+		return models.JWTUser{}, errors.New("failed to cast claims as jwt.MapClaims")
+	}
+
+	expiredAt, err := mapClaims.GetExpirationTime()
+	if err != nil {
+		return models.JWTUser{}, errors.Wrap(err, "cant get token expiration time")
+	}
+
+	sub, err := mapClaims.GetSubject()
+	if err != nil {
+		return models.JWTUser{}, errors.Wrap(err, "cant get token subject")
+	}
+
+	userID, err := strconv.ParseInt(sub, 10, 32)
+	if err != nil {
+		return models.JWTUser{}, errors.Wrap(err, "cant parse user id")
+	}
+
+	return models.JWTUser{
+		UserID:    int32(userID),
+		ExpiredAt: expiredAt.Time,
+	}, nil
+}
+
+func checkAuth(echoCtx echo.Context) (models.JWTUser, error) {
+	jUser, err := jwtUser(echoCtx)
+	if err != nil {
+		return models.JWTUser{}, err
+	}
+
+	return jUser, nil
+}
+
+func NewEchoServer(
+	createSvc *services.CreateUserService,
+	loginSvc *services.LoginService,
+	currentUserSvc *services.UserByIDService,
+) *EchoServer {
+	return &EchoServer{
+		createSvc:      createSvc,
+		loginSvc:       loginSvc,
+		currentUserSvc: currentUserSvc,
+	}
 }

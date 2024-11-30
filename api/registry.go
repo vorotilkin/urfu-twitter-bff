@@ -7,5 +7,5 @@ import (
 )
 
 func Registry(provider *http.Server, serverImpl *usecases.EchoServer) {
-	server.RegisterHandlers(provider.Echo(), serverImpl)
+	server.RegisterHandlersWithBaseURL(provider.Echo(), serverImpl, "/api")
 }

@@ -70,9 +70,11 @@ func main() {
 			fx.ParamTags(`name:"usersProvider"`),
 			fx.As(new(services.LoginRepository)),
 			fx.As(new(services.CreateRepository)),
+			fx.As(new(services.UserByIDRepository)),
 		)),
 		fx.Provide(services.NewCreateUserService),
 		fx.Provide(services.NewLoginService),
+		fx.Provide(services.NewUserByIDService),
 		fx.Provide(usecases.NewEchoServer),
 		fx.Invoke(func(lc fx.Lifecycle, server *http.Server) {
 			lc.Append(fx.Hook{

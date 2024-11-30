@@ -2,6 +2,7 @@ package services
 
 import (
 	"context"
+	"fmt"
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/pkg/errors"
 	"time"
@@ -10,7 +11,7 @@ import (
 )
 
 type LoginRepository interface {
-	FetchPasswordHashByEmail(ctx context.Context, email string) (string, error)
+	FetchUserByEmail(ctx context.Context, email string) (models.User, error)
 }
 
 type Config struct {
@@ -23,19 +24,19 @@ type LoginService struct {
 }
 
 func (s *LoginService) Login(ctx context.Context, email, password string) (models.JWTToken, error) {
-	hash, err := s.repo.FetchPasswordHashByEmail(ctx, email)
+	user, err := s.repo.FetchUserByEmail(ctx, email)
 	if err != nil {
-		return models.JWTToken{}, errors.Wrap(err, "failed to fetch password hash")
+		return models.JWTToken{}, errors.Wrap(err, "failed to fetch user")
 	}
 
-	err = helpers.CompareHashAndPassword(hash, password)
+	err = helpers.CompareHashAndPassword(user.PasswordHash, password)
 	if err != nil {
 		return models.JWTToken{}, errors.Wrap(err, "failed to compare password hash")
 	}
 
 	// Генерируем полезные данные, которые будут храниться в токене
 	payload := jwt.MapClaims{
-		"sub": email,
+		"sub": fmt.Sprint(user.ID),
 		"exp": time.Now().Add(time.Hour * 72).Unix(),
 	}
 

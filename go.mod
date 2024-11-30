@@ -5,14 +5,13 @@ go 1.23.1
 require (
 	github.com/go-playground/validator/v10 v10.14.1
 	github.com/golang-jwt/jwt/v5 v5.2.1
-	github.com/labstack/echo-jwt/v4 v4.2.0
 	github.com/labstack/echo/v4 v4.12.0
 	github.com/mitchellh/mapstructure v1.5.0
 	github.com/oapi-codegen/runtime v1.1.1
 	github.com/pkg/errors v0.9.1
 	github.com/samber/lo v1.47.0
 	github.com/spf13/viper v1.19.0
-	github.com/vorotilkin/twitter-users v1.0.0
+	github.com/vorotilkin/twitter-users v1.2.0
 	go.uber.org/fx v1.23.0
 	go.uber.org/zap v1.27.0
 	golang.org/x/crypto v0.27.0
