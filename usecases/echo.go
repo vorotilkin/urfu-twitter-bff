@@ -16,9 +16,27 @@ import (
 )
 
 type EchoServer struct {
-	createSvc      *services.CreateUserService
-	loginSvc       *services.LoginService
-	currentUserSvc *services.UserByIDService
+	createSvc       *services.CreateUserService
+	loginSvc        *services.LoginService
+	userByIDService *services.UserByIDService
+}
+
+func (s *EchoServer) ListUsers(echoCtx echo.Context) error {
+	// TODO real data
+	return echoCtx.JSON(http.StatusOK, []server.UserResponse{
+		{
+			Email:    lo.ToPtr(openapi_types.Email("test1@gmail.com")),
+			Id:       lo.ToPtr(int32(1234)),
+			Name:     lo.ToPtr("test_name1"),
+			Username: lo.ToPtr("test_username1"),
+		},
+		{
+			Email:    lo.ToPtr(openapi_types.Email("test2@gmail.com")),
+			Id:       lo.ToPtr(int32(1234)),
+			Name:     lo.ToPtr("test_name2"),
+			Username: lo.ToPtr("test_username2"),
+		},
+	})
 }
 
 func (s *EchoServer) Logout(echoCtx echo.Context) error {
@@ -44,7 +62,7 @@ func (s *EchoServer) GetCurrentUser(echoCtx echo.Context) error {
 		return echoCtx.JSON(http.StatusUnauthorized, err.Error())
 	}
 
-	user, err := s.currentUserSvc.UserByID(context.Background(), jUser.UserID)
+	user, err := s.userByIDService.UserByID(context.Background(), jUser.UserID)
 	if errors.Is(err, models.ErrNotFound) {
 		return echoCtx.JSON(http.StatusNotFound, err.Error())
 	}
@@ -52,16 +70,19 @@ func (s *EchoServer) GetCurrentUser(echoCtx echo.Context) error {
 		return echoCtx.JSON(http.StatusInternalServerError, err.Error())
 	}
 
-	return echoCtx.JSON(http.StatusOK, user)
+	return echoCtx.JSON(http.StatusOK, toEchoUser(user))
 }
 
-func (s *EchoServer) GetUser(echoCtx echo.Context, id string) error {
-	token, ok := echoCtx.Get("user").(jwt.MapClaims) // by default token is stored under `user` key
-	if !ok {
-		return errors.New("failed to cast claims as jwt.MapClaims")
+func (s *EchoServer) GetUser(echoCtx echo.Context, id int32) error {
+	user, err := s.userByIDService.UserByID(context.Background(), id)
+	if errors.Is(err, models.ErrNotFound) {
+		return echoCtx.JSON(http.StatusNotFound, err.Error())
+	}
+	if err != nil {
+		return echoCtx.JSON(http.StatusInternalServerError, err.Error())
 	}
 
-	return echoCtx.JSON(http.StatusOK, token)
+	return echoCtx.JSON(http.StatusOK, toEchoUser(user))
 }
 
 func (s *EchoServer) Login(echoCtx echo.Context) error {
@@ -112,14 +133,7 @@ func (s *EchoServer) CreateUser(echoCtx echo.Context) error {
 		return echoCtx.JSON(http.StatusInternalServerError, err.Error())
 	}
 
-	response := &server.UserResponse{
-		Email:    lo.ToPtr(openapi_types.Email(user.Email)),
-		Id:       lo.ToPtr(user.ID),
-		Name:     lo.ToPtr(user.Name),
-		Username: lo.ToPtr(user.Username),
-	}
-
-	return echoCtx.JSON(http.StatusCreated, response)
+	return echoCtx.JSON(http.StatusCreated, toEchoUser(user))
 }
 
 func jwtUser(echoCtx echo.Context) (models.JWTUser, error) {
@@ -158,14 +172,23 @@ func checkAuth(echoCtx echo.Context) (models.JWTUser, error) {
 	return jUser, nil
 }
 
+func toEchoUser(user models.User) *server.UserResponse {
+	return &server.UserResponse{
+		Email:    lo.ToPtr(openapi_types.Email(user.Email)),
+		Id:       lo.ToPtr(user.ID),
+		Name:     lo.ToPtr(user.Name),
+		Username: lo.ToPtr(user.Username),
+	}
+}
+
 func NewEchoServer(
 	createSvc *services.CreateUserService,
 	loginSvc *services.LoginService,
 	currentUserSvc *services.UserByIDService,
 ) *EchoServer {
 	return &EchoServer{
-		createSvc:      createSvc,
-		loginSvc:       loginSvc,
-		currentUserSvc: currentUserSvc,
+		createSvc:       createSvc,
+		loginSvc:        loginSvc,
+		userByIDService: currentUserSvc,
 	}
 }

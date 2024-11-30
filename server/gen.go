@@ -71,12 +71,15 @@ type ServerInterface interface {
 	// Create a new user
 	// (POST /register)
 	CreateUser(ctx echo.Context) error
+	// List all users
+	// (GET /users)
+	ListUsers(ctx echo.Context) error
 	// Get current user details
-	// (GET /user/current)
+	// (GET /users/current)
 	GetCurrentUser(ctx echo.Context) error
 	// Get user by ID
 	// (GET /users/{id})
-	GetUser(ctx echo.Context, id string) error
+	GetUser(ctx echo.Context, id int32) error
 }
 
 // ServerInterfaceWrapper converts echo contexts to parameters.
@@ -111,6 +114,15 @@ func (w *ServerInterfaceWrapper) CreateUser(ctx echo.Context) error {
 	return err
 }
 
+// ListUsers converts echo context to params.
+func (w *ServerInterfaceWrapper) ListUsers(ctx echo.Context) error {
+	var err error
+
+	// Invoke the callback with all the unmarshaled arguments
+	err = w.Handler.ListUsers(ctx)
+	return err
+}
+
 // GetCurrentUser converts echo context to params.
 func (w *ServerInterfaceWrapper) GetCurrentUser(ctx echo.Context) error {
 	var err error
@@ -124,7 +136,7 @@ func (w *ServerInterfaceWrapper) GetCurrentUser(ctx echo.Context) error {
 func (w *ServerInterfaceWrapper) GetUser(ctx echo.Context) error {
 	var err error
 	// ------------- Path parameter "id" -------------
-	var id string
+	var id int32
 
 	err = runtime.BindStyledParameterWithOptions("simple", "id", ctx.Param("id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
 	if err != nil {
@@ -167,7 +179,8 @@ func RegisterHandlersWithBaseURL(router EchoRouter, si ServerInterface, baseURL 
 	router.POST(baseURL+"/login", wrapper.Login)
 	router.POST(baseURL+"/logout", wrapper.Logout)
 	router.POST(baseURL+"/register", wrapper.CreateUser)
-	router.GET(baseURL+"/user/current", wrapper.GetCurrentUser)
+	router.GET(baseURL+"/users", wrapper.ListUsers)
+	router.GET(baseURL+"/users/current", wrapper.GetCurrentUser)
 	router.GET(baseURL+"/users/:id", wrapper.GetUser)
 
 }

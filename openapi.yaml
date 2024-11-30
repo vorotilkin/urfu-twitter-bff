@@ -57,7 +57,16 @@ paths:
                 $ref: '#/components/schemas/JWTResponse'
         '401':
           description: Invalid credentials
-  /user/current:
+  /logout:
+    post:
+      summary: Logout user
+      operationId: logout
+      responses:
+        '200':
+          description: Successful logout
+        '401':
+          description: Unauthorized user
+  /users/current:
     get:
       summary: Get current user details
       operationId: getCurrentUser
@@ -73,20 +82,20 @@ paths:
         '500':
           description: Internal server error
 
+  /users:
+    get:
+      summary: List all users
+      operationId: listUsers
+      responses:
+        '200':
+          description: A list of users
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/UserResponse'
 
-#    get:
-#      summary: List all users
-#      operationId: listUsers
-#      responses:
-#        '200':
-#          description: A list of users
-#          content:
-#            application/json:
-#              schema:
-#                type: array
-#                items:
-#                  $ref: '#/components/schemas/UserResponse'
-#
   /users/{id}:
     get:
       summary: Get user by ID
@@ -97,7 +106,8 @@ paths:
           required: true
           description: ID of the user
           schema:
-            type: string
+            type: integer
+            format: int32
       responses:
         '200':
           description: User details
