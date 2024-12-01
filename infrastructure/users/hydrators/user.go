@@ -16,5 +16,8 @@ func DomainUser(user *proto.User) models.User {
 		PasswordHash: user.GetPasswordHash(),
 		Username:     user.GetUsername(),
 		Email:        user.GetEmail(),
+		Bio:          user.GetBio(),
+		ProfileImage: user.GetProfileImage(),
+		CoverImage:   user.GetCoverImage(),
 	}
 }

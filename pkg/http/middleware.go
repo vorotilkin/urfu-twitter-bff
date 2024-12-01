@@ -18,13 +18,10 @@ func JwtCookieMiddleware(secretKey string, skipPaths ...string) echo.MiddlewareF
 			}
 
 			cookie, err := c.Cookie(models.JWTCookieName)
+			if errors.Is(err, http.ErrNoCookie) {
+				return next(c)
+			}
 			if err != nil {
-				if errors.Is(err, http.ErrNoCookie) {
-					return c.JSON(http.StatusUnauthorized, map[string]string{
-						"message": "Missing token",
-					})
-				}
-
 				return c.JSON(http.StatusBadRequest, map[string]string{
 					"message": "Invalid cookie",
 				})

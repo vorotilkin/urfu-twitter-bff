@@ -81,6 +81,27 @@ paths:
           description: Unauthorized (user is not authenticated)
         '500':
           description: Internal server error
+    put:
+      summary: Update user
+      operationId: updateUser
+      requestBody:
+        description: Updated data for the user
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserUpdateRequest'
+      responses:
+        '200':
+          description: User updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserResponse'
+        '404':
+          description: User not found
+        '401':
+          description: Unauthorized (user is not authenticated)
 
   /users:
     get:
@@ -117,32 +138,6 @@ paths:
                 $ref: '#/components/schemas/UserResponse'
         '404':
           description: User not found
-#    put:
-#      summary: Update user by ID
-#      operationId: updateUser
-#      parameters:
-#        - name: id
-#          in: path
-#          required: true
-#          description: ID of the user
-#          schema:
-#            type: string
-#      requestBody:
-#        description: Updated data for the user
-#        required: true
-#        content:
-#          application/json:
-#            schema:
-#              $ref: '#/components/schemas/UserUpdateRequest'
-#      responses:
-#        '200':
-#          description: User updated successfully
-#          content:
-#            application/json:
-#              schema:
-#                $ref: '#/components/schemas/UserResponse'
-#        '404':
-#          description: User not found
 #    delete:
 #      summary: Delete user by ID
 #      operationId: deleteUser
@@ -183,24 +178,26 @@ components:
         - username
         - email
         - password
-#
-#    UserUpdateRequest:
-#      type: object
-#      properties:
-#        name:
-#          type: string
-#          description: Full name of the user
-#        username:
-#          type: string
-#          description: Unique username for the user
-#        email:
-#          type: string
-#          format: email
-#          description: Email address of the user
-#      required:
-#        - name
-#        - username
-#        - email
+
+    UserUpdateRequest:
+      type: object
+      properties:
+        name:
+          type: string
+          description: Full name of the user
+        username:
+          type: string
+          description: Unique username for the user
+        bio:
+          type: string
+          description: User biography
+        profileImage:
+          type: string
+        coverImage:
+          type: string
+      required:
+        - name
+        - username
 
     UserResponse:
       type: object
@@ -219,6 +216,13 @@ components:
           type: string
           format: email
           description: Email address of the user
+        bio:
+          type: string
+        profileImage:
+          type: string
+        coverImage:
+          type: string
+
     JWTResponse:
       type: object
       required: [accessToken]

@@ -1,9 +1,6 @@
 package models
 
-import (
-	"fmt"
-	"golang.org/x/crypto/bcrypt"
-)
+import "github.com/samber/mo"
 
 type User struct {
 	ID           int32
@@ -11,16 +8,16 @@ type User struct {
 	PasswordHash string
 	Username     string
 	Email        string
+	Bio          string
+	ProfileImage string
+	CoverImage   string
 }
 
-func (u *User) SetPasswordHash(password string) error {
-	// bcrypt.GenerateFromPassword возвращает хэш пароля
-	hash, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
-	if err != nil {
-		return fmt.Errorf("failed to hash password: %w", err)
-	}
-
-	u.PasswordHash = string(hash)
-
-	return nil
+type UserOption struct {
+	ID           int32
+	Name         mo.Option[string]
+	Username     mo.Option[string]
+	Bio          mo.Option[string]
+	ProfileImage mo.Option[string]
+	CoverImage   mo.Option[string]
 }

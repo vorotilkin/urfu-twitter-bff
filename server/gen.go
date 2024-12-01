@@ -35,6 +35,9 @@ type UserCreateRequest struct {
 
 // UserResponse defines model for UserResponse.
 type UserResponse struct {
+	Bio        *string `json:"bio,omitempty"`
+	CoverImage *string `json:"coverImage,omitempty"`
+
 	// Email Email address of the user
 	Email *openapi_types.Email `json:"email,omitempty"`
 
@@ -42,10 +45,25 @@ type UserResponse struct {
 	Id *int32 `json:"id,omitempty"`
 
 	// Name Full name of the user
-	Name *string `json:"name,omitempty"`
+	Name         *string `json:"name,omitempty"`
+	ProfileImage *string `json:"profileImage,omitempty"`
 
 	// Username Unique username for the user
 	Username *string `json:"username,omitempty"`
+}
+
+// UserUpdateRequest defines model for UserUpdateRequest.
+type UserUpdateRequest struct {
+	// Bio User biography
+	Bio        *string `json:"bio,omitempty"`
+	CoverImage *string `json:"coverImage,omitempty"`
+
+	// Name Full name of the user
+	Name         string  `json:"name"`
+	ProfileImage *string `json:"profileImage,omitempty"`
+
+	// Username Unique username for the user
+	Username string `json:"username"`
 }
 
 // LoginJSONBody defines parameters for Login.
@@ -59,6 +77,9 @@ type LoginJSONRequestBody LoginJSONBody
 
 // CreateUserJSONRequestBody defines body for CreateUser for application/json ContentType.
 type CreateUserJSONRequestBody = UserCreateRequest
+
+// UpdateUserJSONRequestBody defines body for UpdateUser for application/json ContentType.
+type UpdateUserJSONRequestBody = UserUpdateRequest
 
 // ServerInterface represents all server handlers.
 type ServerInterface interface {
@@ -77,6 +98,9 @@ type ServerInterface interface {
 	// Get current user details
 	// (GET /users/current)
 	GetCurrentUser(ctx echo.Context) error
+	// Update user
+	// (PUT /users/current)
+	UpdateUser(ctx echo.Context) error
 	// Get user by ID
 	// (GET /users/{id})
 	GetUser(ctx echo.Context, id int32) error
@@ -132,6 +156,15 @@ func (w *ServerInterfaceWrapper) GetCurrentUser(ctx echo.Context) error {
 	return err
 }
 
+// UpdateUser converts echo context to params.
+func (w *ServerInterfaceWrapper) UpdateUser(ctx echo.Context) error {
+	var err error
+
+	// Invoke the callback with all the unmarshaled arguments
+	err = w.Handler.UpdateUser(ctx)
+	return err
+}
+
 // GetUser converts echo context to params.
 func (w *ServerInterfaceWrapper) GetUser(ctx echo.Context) error {
 	var err error
@@ -181,6 +214,7 @@ func RegisterHandlersWithBaseURL(router EchoRouter, si ServerInterface, baseURL 
 	router.POST(baseURL+"/register", wrapper.CreateUser)
 	router.GET(baseURL+"/users", wrapper.ListUsers)
 	router.GET(baseURL+"/users/current", wrapper.GetCurrentUser)
+	router.PUT(baseURL+"/users/current", wrapper.UpdateUser)
 	router.GET(baseURL+"/users/:id", wrapper.GetUser)
 
 }

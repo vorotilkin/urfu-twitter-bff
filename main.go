@@ -71,10 +71,12 @@ func main() {
 			fx.As(new(services.LoginRepository)),
 			fx.As(new(services.CreateRepository)),
 			fx.As(new(services.UserByIDRepository)),
+			fx.As(new(services.UpdateUserByIDRepository)),
 		)),
 		fx.Provide(services.NewCreateUserService),
 		fx.Provide(services.NewLoginService),
 		fx.Provide(services.NewUserByIDService),
+		fx.Provide(services.NewUpdateUserByIDService),
 		fx.Provide(usecases.NewEchoServer),
 		fx.Invoke(func(lc fx.Lifecycle, server *http.Server) {
 			lc.Append(fx.Hook{

@@ -7,6 +7,7 @@ import (
 	openapi_types "github.com/oapi-codegen/runtime/types"
 	"github.com/pkg/errors"
 	"github.com/samber/lo"
+	"github.com/samber/mo"
 	"net/http"
 	"strconv"
 	"time"
@@ -16,9 +17,45 @@ import (
 )
 
 type EchoServer struct {
-	createSvc       *services.CreateUserService
-	loginSvc        *services.LoginService
-	userByIDService *services.UserByIDService
+	createSvc         *services.CreateUserService
+	loginSvc          *services.LoginService
+	userByIDService   *services.UserByIDService
+	updateByIDService *services.UpdateUserByIDService
+}
+
+func (s *EchoServer) UpdateUser(echoCtx echo.Context) error {
+	jUser, err := checkAuth(echoCtx)
+	if err != nil {
+		return echoCtx.JSON(http.StatusUnauthorized, err.Error())
+	}
+
+	req := &server.UserUpdateRequest{}
+
+	err = echoCtx.Bind(req)
+	if err != nil {
+		return echoCtx.JSON(http.StatusUnprocessableEntity, err.Error())
+	}
+
+	err = echoCtx.Validate(req)
+	if err != nil {
+		return echoCtx.JSON(http.StatusUnprocessableEntity, err.Error())
+	}
+
+	userToUpdate := models.UserOption{
+		ID:           jUser.UserID,
+		Name:         mo.Some(req.Name),
+		Username:     mo.Some(req.Username),
+		Bio:          mo.PointerToOption(req.Bio),
+		ProfileImage: mo.PointerToOption(req.ProfileImage),
+		CoverImage:   mo.PointerToOption(req.CoverImage),
+	}
+
+	user, err := s.updateByIDService.UpdateUserByID(context.Background(), userToUpdate)
+	if err != nil {
+		return echoCtx.JSON(http.StatusInternalServerError, err.Error())
+	}
+
+	return echoCtx.JSON(http.StatusOK, toEchoUser(user))
 }
 
 func (s *EchoServer) ListUsers(echoCtx echo.Context) error {
@@ -26,13 +63,13 @@ func (s *EchoServer) ListUsers(echoCtx echo.Context) error {
 	return echoCtx.JSON(http.StatusOK, []server.UserResponse{
 		{
 			Email:    lo.ToPtr(openapi_types.Email("test1@gmail.com")),
-			Id:       lo.ToPtr(int32(1234)),
+			Id:       lo.ToPtr(int32(5)),
 			Name:     lo.ToPtr("test_name1"),
 			Username: lo.ToPtr("test_username1"),
 		},
 		{
 			Email:    lo.ToPtr(openapi_types.Email("test2@gmail.com")),
-			Id:       lo.ToPtr(int32(1234)),
+			Id:       lo.ToPtr(int32(10)),
 			Name:     lo.ToPtr("test_name2"),
 			Username: lo.ToPtr("test_username2"),
 		},
@@ -174,10 +211,13 @@ func checkAuth(echoCtx echo.Context) (models.JWTUser, error) {
 
 func toEchoUser(user models.User) *server.UserResponse {
 	return &server.UserResponse{
-		Email:    lo.ToPtr(openapi_types.Email(user.Email)),
-		Id:       lo.ToPtr(user.ID),
-		Name:     lo.ToPtr(user.Name),
-		Username: lo.ToPtr(user.Username),
+		Email:        lo.ToPtr(openapi_types.Email(user.Email)),
+		Id:           lo.ToPtr(user.ID),
+		Name:         lo.ToPtr(user.Name),
+		Username:     lo.ToPtr(user.Username),
+		Bio:          lo.ToPtr(user.Bio),
+		ProfileImage: lo.ToPtr(user.ProfileImage),
+		CoverImage:   lo.ToPtr(user.CoverImage),
 	}
 }
 
@@ -185,10 +225,12 @@ func NewEchoServer(
 	createSvc *services.CreateUserService,
 	loginSvc *services.LoginService,
 	currentUserSvc *services.UserByIDService,
+	updateUserSvc *services.UpdateUserByIDService,
 ) *EchoServer {
 	return &EchoServer{
-		createSvc:       createSvc,
-		loginSvc:        loginSvc,
-		userByIDService: currentUserSvc,
+		createSvc:         createSvc,
+		loginSvc:          loginSvc,
+		userByIDService:   currentUserSvc,
+		updateByIDService: updateUserSvc,
 	}
 }

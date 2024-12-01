@@ -75,6 +75,29 @@ func (r *Repository) Create(ctx context.Context, name, passwordHash, username, e
 	return hydrators.DomainUser(protoUser.GetUser()), nil
 }
 
+func (r *Repository) UpdateUserByID(ctx context.Context, userToUpdate models.UserOption) (models.User, error) {
+	client := proto.NewUsersClient(r.client.Connection())
+
+	req := proto.UpdateByIDRequest{
+		Id:           userToUpdate.ID,
+		Name:         userToUpdate.Name.ToPointer(),
+		Username:     userToUpdate.Username.ToPointer(),
+		Bio:          userToUpdate.Bio.ToPointer(),
+		ProfileImage: userToUpdate.ProfileImage.ToPointer(),
+		CoverImage:   userToUpdate.CoverImage.ToPointer(),
+	}
+
+	response, err := client.UpdateByID(ctx, &req)
+	if status.Code(err) == codes.NotFound {
+		return models.User{}, models.ErrNotFound
+	}
+	if err != nil {
+		return models.User{}, errors.Wrap(err, "UpdateUserByID")
+	}
+
+	return hydrators.DomainUser(response.GetUser()), nil
+}
+
 func NewRepository(client *grpc.Client) *Repository {
 	return &Repository{
 		client: client,
