@@ -99,8 +99,8 @@ github.com/valyala/bytebufferpool v1.0.0 h1:GqA5TC/0021Y/b9FG4Oi9Mr3q7XYx6Kllzaw
 github.com/valyala/bytebufferpool v1.0.0/go.mod h1:6bBcMArwyJ5K/AmCkWv1jt77kVWyCJ6HpOuEn7z0Csc=
 github.com/valyala/fasttemplate v1.2.2 h1:lxLXG0uE3Qnshl9QyaK6XJxMXlQZELvChBOCmQD0Loo=
 github.com/valyala/fasttemplate v1.2.2/go.mod h1:KHLXt3tVN2HBp8eijSv/kGJopbvo7S+qRAEEKiv+SiQ=
-github.com/vorotilkin/twitter-posts v1.1.1 h1:PjzXcklhlvdkWZffdcMiFMvjS5uvQEdUXYsz9eiEj+A=
-github.com/vorotilkin/twitter-posts v1.1.1/go.mod h1:flTJNyixf2qjG7UzQq7hJmG778lsDfExfYhWBaqQM/Y=
+github.com/vorotilkin/twitter-posts v1.2.0 h1:GyQj/X07Lp5CKAIw0M56JlNzjvgAcnDy18eWMbuFS8s=
+github.com/vorotilkin/twitter-posts v1.2.0/go.mod h1:flTJNyixf2qjG7UzQq7hJmG778lsDfExfYhWBaqQM/Y=
 github.com/vorotilkin/twitter-users v1.5.1 h1:LAp+sWQZFMTwMXmaXZ/VM5nFoldWc2QzTB9IJun5UnA=
 github.com/vorotilkin/twitter-users v1.5.1/go.mod h1:dLKekp6J/5XJv7WfRz5GwmasKTSgFibjl6JWVT+/JT4=
 go.uber.org/dig v1.18.0 h1:imUL1UiY0Mg4bqbFfsRQO5G4CGRBec/ZujWTvSVp3pw=

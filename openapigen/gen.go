@@ -87,6 +87,12 @@ type UserUpdateRequest struct {
 	Username string `json:"username"`
 }
 
+// CommentsParams defines parameters for Comments.
+type CommentsParams struct {
+	// PostId ID of the post
+	PostId *int32 `form:"postId,omitempty" json:"postId,omitempty"`
+}
+
 // LoginJSONBody defines parameters for Login.
 type LoginJSONBody struct {
 	Email    *openapi_types.Email `json:"email,omitempty"`
@@ -119,6 +125,9 @@ type UpdateUserJSONRequestBody = UserUpdateRequest
 
 // ServerInterface represents all server handlers.
 type ServerInterface interface {
+	// Получение информации о комментариях к посту
+	// (GET /comments)
+	Comments(ctx echo.Context, params CommentsParams) error
 	// Authenticate user
 	// (POST /login)
 	Login(ctx echo.Context) error
@@ -154,6 +163,24 @@ type ServerInterface interface {
 // ServerInterfaceWrapper converts echo contexts to parameters.
 type ServerInterfaceWrapper struct {
 	Handler ServerInterface
+}
+
+// Comments converts echo context to params.
+func (w *ServerInterfaceWrapper) Comments(ctx echo.Context) error {
+	var err error
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params CommentsParams
+	// ------------- Optional query parameter "postId" -------------
+
+	err = runtime.BindQueryParameter("form", true, false, "postId", ctx.QueryParams(), &params.PostId)
+	if err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter postId: %s", err))
+	}
+
+	// Invoke the callback with all the unmarshaled arguments
+	err = w.Handler.Comments(ctx, params)
+	return err
 }
 
 // Login converts echo context to params.
@@ -297,6 +324,7 @@ func RegisterHandlersWithBaseURL(router EchoRouter, si ServerInterface, baseURL 
 		Handler: si,
 	}
 
+	router.GET(baseURL+"/comments", wrapper.Comments)
 	router.POST(baseURL+"/login", wrapper.Login)
 	router.POST(baseURL+"/logout", wrapper.Logout)
 	router.GET(baseURL+"/posts", wrapper.Posts)

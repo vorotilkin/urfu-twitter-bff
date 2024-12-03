@@ -13,6 +13,7 @@ type PostsRepository interface {
 	PostsByUserID(ctx context.Context, userID int32) ([]models.Post, error)
 	LatestPosts(ctx context.Context, limit int32) ([]models.Post, error)
 	PostByID(ctx context.Context, postID int32) (models.Post, error)
+	CommentsByPostID(ctx context.Context, postID int32) ([]models.Comment, error)
 }
 
 type PostsService struct {
@@ -60,10 +61,23 @@ func (s *PostsService) PostByID(ctx context.Context, postID int32) (models.Post,
 
 	post, err := s.repo.PostByID(ctx, postID)
 	if err != nil {
-		return models.Post{}, errors.Wrap(err, "create repo err")
+		return models.Post{}, errors.Wrap(err, "posts repo err")
 	}
 
 	return post, nil
+}
+
+func (s *PostsService) CommentsByPostID(ctx context.Context, postID int32) ([]models.Comment, error) {
+	if postID == 0 {
+		return nil, errors.Wrap(models.ErrInvalidArgument, "invalid post id")
+	}
+
+	comments, err := s.repo.CommentsByPostID(ctx, postID)
+	if err != nil {
+		return nil, errors.Wrap(err, "posts repo err")
+	}
+
+	return comments, nil
 }
 
 func NewPostsService(repo PostsRepository) *PostsService {

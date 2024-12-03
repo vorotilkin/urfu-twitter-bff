@@ -100,6 +100,22 @@ func (r *Repository) PostByID(ctx context.Context, postID int32) (models.Post, e
 	return hydrators.DomainPost(response.GetPost()), nil
 }
 
+func (r *Repository) CommentsByPostID(ctx context.Context, postID int32) ([]models.Comment, error) {
+	client := proto.NewPostsClient(r.client.Connection())
+
+	req := proto.CommentsByPostIDRequest{PostId: postID}
+
+	response, err := client.CommentsByPostID(ctx, &req)
+	if err != nil {
+		if status.Code(err) == codes.NotFound {
+			return nil, models.ErrNotFound
+		}
+		return nil, err
+	}
+
+	return hydrators.DomainComments(response.GetComments()), nil
+}
+
 func NewRepository(client *grpc.Client) *Repository {
 	return &Repository{
 		client: client,

@@ -25,6 +25,15 @@ type EchoServer struct {
 	postSvc           *services.PostsService
 }
 
+func (s *EchoServer) Comments(echoCtx echo.Context, params openapigen.CommentsParams) error {
+	comments, err := s.postSvc.CommentsByPostID(context.Background(), lo.FromPtr(params.PostId))
+	if err != nil {
+		return echoCtx.JSON(ErrorHandler(err))
+	}
+
+	return echoCtx.JSON(http.StatusOK, decorators.EchoComments(comments))
+}
+
 func (s *EchoServer) PostById(echoCtx echo.Context, id int32) error {
 	post, err := s.postSvc.PostByID(context.Background(), id)
 	if err != nil {
