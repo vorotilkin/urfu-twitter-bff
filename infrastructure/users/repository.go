@@ -3,6 +3,7 @@ package users
 import (
 	"context"
 	"github.com/pkg/errors"
+	"github.com/samber/lo"
 	"github.com/vorotilkin/twitter-users/proto"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -15,20 +16,23 @@ type Repository struct {
 	client *grpc.Client
 }
 
-func (r *Repository) FetchUserByID(ctx context.Context, id int32) (models.User, error) {
+func (r *Repository) FetchUsersByIDs(ctx context.Context, ids []int32) (map[int32]models.User, error) {
 	client := proto.NewUsersClient(r.client.Connection())
 
-	req := proto.UserByIDRequest{Id: id}
+	req := proto.UsersByIDsRequest{Ids: ids}
 
-	response, err := client.UserByID(ctx, &req)
+	response, err := client.UsersByIDs(ctx, &req)
 	if status.Code(err) == codes.NotFound {
-		return models.User{}, models.ErrNotFound
+		return nil, models.ErrNotFound
 	}
 	if err != nil {
-		return models.User{}, errors.Wrap(err, "FetchUserByID")
+		return nil, errors.Wrap(err, "FetchUsersByIDs")
 	}
 
-	return hydrators.DomainUser(response.GetUser()), nil
+	return lo.SliceToMap(response.GetUsers(), func(user *proto.User) (int32, models.User) {
+		u := hydrators.DomainUser(user)
+		return u.ID, u
+	}), nil
 }
 
 func (r *Repository) FetchUserByEmail(ctx context.Context, email string) (models.User, error) {

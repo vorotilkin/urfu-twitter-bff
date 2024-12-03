@@ -81,6 +81,7 @@ func main() {
 			fx.As(new(services.CreateRepository)),
 			fx.As(new(services.UserByIDRepository)),
 			fx.As(new(services.UpdateUserByIDRepository)),
+			fx.As(new(services.PostsUsersByIDsRepository)),
 		)),
 		fx.Provide(fx.Annotate(
 			posts.NewRepository,

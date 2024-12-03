@@ -120,7 +120,7 @@ func (s *EchoServer) UpdateUser(echoCtx echo.Context) error {
 
 func (s *EchoServer) ListUsers(echoCtx echo.Context) error {
 	// TODO real data
-	return echoCtx.JSON(http.StatusOK, []openapigen.UserResponse{
+	return echoCtx.JSON(http.StatusOK, []openapigen.User{
 		{
 			Email:    lo.ToPtr(openapi_types.Email("test1@gmail.com")),
 			Id:       lo.ToPtr(int32(5)),

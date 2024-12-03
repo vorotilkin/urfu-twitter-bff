@@ -36,26 +36,12 @@ type Post struct {
 	Id        int32              `json:"id"`
 	LikeCount int32              `json:"likeCount"`
 	UpdatedAt openapi_types.Date `json:"updatedAt"`
+	User      *User              `json:"user,omitempty"`
 	UserId    string             `json:"userId"`
 }
 
-// UserCreateRequest defines model for UserCreateRequest.
-type UserCreateRequest struct {
-	// Email Email address of the user
-	Email openapi_types.Email `json:"email"`
-
-	// Name Full name of the user
-	Name string `json:"name"`
-
-	// Password User password
-	Password string `json:"password"`
-
-	// Username Unique username for the user
-	Username string `json:"username"`
-}
-
-// UserResponse defines model for UserResponse.
-type UserResponse struct {
+// User defines model for User.
+type User struct {
 	Bio        *string `json:"bio,omitempty"`
 	CoverImage *string `json:"coverImage,omitempty"`
 
@@ -71,6 +57,21 @@ type UserResponse struct {
 
 	// Username Unique username for the user
 	Username *string `json:"username,omitempty"`
+}
+
+// UserCreateRequest defines model for UserCreateRequest.
+type UserCreateRequest struct {
+	// Email Email address of the user
+	Email openapi_types.Email `json:"email"`
+
+	// Name Full name of the user
+	Name string `json:"name"`
+
+	// Password User password
+	Password string `json:"password"`
+
+	// Username Unique username for the user
+	Username string `json:"username"`
 }
 
 // UserUpdateRequest defines model for UserUpdateRequest.

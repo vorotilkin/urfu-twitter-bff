@@ -7,8 +7,8 @@ import (
 	"twitter-bff/openapigen"
 )
 
-func EchoUser(user models.User) *openapigen.UserResponse {
-	return &openapigen.UserResponse{
+func EchoUser(user models.User) *openapigen.User {
+	return &openapigen.User{
 		Email:        lo.ToPtr(types.Email(user.Email)),
 		Id:           lo.ToPtr(user.ID),
 		Name:         lo.ToPtr(user.Name),

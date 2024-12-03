@@ -26,7 +26,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/UserResponse'
+                $ref: '#/components/schemas/User'
         '400':
           description: Invalid input
   /login:
@@ -76,7 +76,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/UserResponse'
+                $ref: '#/components/schemas/User'
         '401':
           description: Unauthorized (user is not authenticated)
         '500':
@@ -97,7 +97,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/UserResponse'
+                $ref: '#/components/schemas/User'
         '404':
           description: User not found
         '401':
@@ -115,7 +115,7 @@ paths:
               schema:
                 type: array
                 items:
-                  $ref: '#/components/schemas/UserResponse'
+                  $ref: '#/components/schemas/User'
 
   /users/{id}:
     get:
@@ -135,24 +135,9 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/UserResponse'
+                $ref: '#/components/schemas/User'
         '404':
           description: User not found
-#    delete:
-#      summary: Delete user by ID
-#      operationId: deleteUser
-#      parameters:
-#        - name: id
-#          in: path
-#          required: true
-#          description: ID of the user
-#          schema:
-#            type: string
-#      responses:
-#        '204':
-#          description: User deleted successfully
-#        '404':
-#          description: User not found
   /posts:
     post:
       summary: Создание поста
@@ -290,7 +275,7 @@ components:
         - name
         - username
 
-    UserResponse:
+    User:
       type: object
       properties:
         id:
@@ -359,6 +344,8 @@ components:
           format: date
         userId:
           type: string
+        user:
+          $ref: "#/components/schemas/User"
         likeCount:
           type: integer
           format: int32

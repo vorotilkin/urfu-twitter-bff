@@ -23,5 +23,6 @@ func EchoPost(post models.Post) openapigen.Post {
 		LikeCount: post.LikeCount,
 		UpdatedAt: openapi_types.Date{Time: post.UpdatedAt},
 		UserId:    fmt.Sprint(post.UserID),
+		User:      EchoUser(post.User),
 	}
 }

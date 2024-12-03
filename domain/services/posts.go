@@ -3,6 +3,7 @@ package services
 import (
 	"context"
 	"github.com/pkg/errors"
+	"github.com/samber/lo"
 	"twitter-bff/domain/models"
 )
 
@@ -16,8 +17,13 @@ type PostsRepository interface {
 	CommentsByPostID(ctx context.Context, postID int32) ([]models.Comment, error)
 }
 
+type PostsUsersByIDsRepository interface {
+	FetchUsersByIDs(ctx context.Context, ids []int32) (map[int32]models.User, error)
+}
+
 type PostsService struct {
-	repo PostsRepository
+	repo      PostsRepository
+	usersRepo PostsUsersByIDsRepository
 }
 
 func (s *PostsService) Create(ctx context.Context, userID int32, body string) (models.Post, error) {
@@ -38,17 +44,40 @@ func (s *PostsService) Create(ctx context.Context, userID int32, body string) (m
 }
 
 func (s *PostsService) Posts(ctx context.Context, userID int32) ([]models.Post, error) {
+	var (
+		posts []models.Post
+		err   error
+	)
+
 	if userID == 0 {
-		posts, err := s.repo.LatestPosts(ctx, defaultPostLimit)
-		if err != nil {
-			return nil, errors.Wrap(err, "get posts by user err")
-		}
-		return posts, nil
+		posts, err = s.repo.LatestPosts(ctx, defaultPostLimit)
+	} else {
+		posts, err = s.repo.PostsByUserID(ctx, userID)
 	}
 
-	posts, err := s.repo.PostsByUserID(ctx, userID)
 	if err != nil {
 		return nil, errors.Wrap(err, "get posts err")
+	}
+
+	userIDs := lo.Uniq(lo.Map(posts, func(post models.Post, _ int) int32 {
+		return post.UserID
+	}))
+
+	usersByID, err := s.usersRepo.FetchUsersByIDs(ctx, userIDs)
+	if err != nil {
+		return nil, errors.Wrap(err, "get users err")
+	}
+
+	for i, post := range posts {
+		user := usersByID[post.UserID]
+		u := models.User{
+			ID:       user.ID,
+			Name:     user.Name,
+			Username: user.Username,
+			Email:    user.Email,
+		}
+
+		posts[i].User = u
 	}
 
 	return posts, nil
@@ -80,6 +109,6 @@ func (s *PostsService) CommentsByPostID(ctx context.Context, postID int32) ([]mo
 	return comments, nil
 }
 
-func NewPostsService(repo PostsRepository) *PostsService {
-	return &PostsService{repo: repo}
+func NewPostsService(repo PostsRepository, usersRepo PostsUsersByIDsRepository) *PostsService {
+	return &PostsService{repo: repo, usersRepo: usersRepo}
 }

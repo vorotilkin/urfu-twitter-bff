@@ -8,6 +8,7 @@ type Post struct {
 	CreatedAt time.Time
 	UpdatedAt time.Time
 	UserID    int32
+	User      User
 	LikeCount int32
 	Comments  []Comment
 }
