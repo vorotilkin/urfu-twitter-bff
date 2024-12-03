@@ -8,6 +8,7 @@ import (
 	"go.uber.org/zap"
 	"twitter-bff/api"
 	"twitter-bff/domain/services"
+	"twitter-bff/infrastructure/posts"
 	"twitter-bff/infrastructure/users"
 	"twitter-bff/pkg/configuration"
 	"twitter-bff/pkg/grpc"
@@ -22,6 +23,9 @@ type config struct {
 	Grpc struct {
 		Client struct {
 			Users struct {
+				Address string
+			}
+			Posts struct {
 				Address string
 			}
 		}
@@ -64,7 +68,12 @@ func main() {
 		}),
 		fx.Provide(fx.Annotate(func(c *config) grpc.Config { return grpc.Config{Address: c.Grpc.Client.Users.Address} },
 			fx.ResultTags(`name:"usersConfig"`))),
+		fx.Provide(fx.Annotate(func(c *config) grpc.Config {
+			return grpc.Config{Address: c.Grpc.Client.Posts.Address}
+		},
+			fx.ResultTags(`name:"postsConfig"`))),
 		fx.Provide(fx.Annotate(grpc.NewClient, fx.ParamTags(`name:"usersConfig"`), fx.ResultTags(`name:"usersProvider"`))),
+		fx.Provide(fx.Annotate(grpc.NewClient, fx.ParamTags(`name:"postsConfig"`), fx.ResultTags(`name:"postsProvider"`))),
 		fx.Provide(fx.Annotate(
 			users.NewRepository,
 			fx.ParamTags(`name:"usersProvider"`),
@@ -73,10 +82,16 @@ func main() {
 			fx.As(new(services.UserByIDRepository)),
 			fx.As(new(services.UpdateUserByIDRepository)),
 		)),
+		fx.Provide(fx.Annotate(
+			posts.NewRepository,
+			fx.ParamTags(`name:"postsProvider"`),
+			fx.As(new(services.PostsRepository)),
+		)),
 		fx.Provide(services.NewCreateUserService),
 		fx.Provide(services.NewLoginService),
 		fx.Provide(services.NewUserByIDService),
 		fx.Provide(services.NewUpdateUserByIDService),
+		fx.Provide(services.NewPostsService),
 		fx.Provide(usecases.NewEchoServer),
 		fx.Invoke(func(lc fx.Lifecycle, server *http.Server) {
 			lc.Append(fx.Hook{
@@ -90,6 +105,12 @@ func main() {
 				OnStop:  client.OnStop,
 			})
 		}, fx.ParamTags("", `name:"usersProvider"`))),
+		fx.Invoke(fx.Annotate(func(lc fx.Lifecycle, client *grpc.Client) {
+			lc.Append(fx.Hook{
+				OnStart: client.OnStart,
+				OnStop:  client.OnStop,
+			})
+		}, fx.ParamTags("", `name:"postsProvider"`))),
 		fx.Invoke(api.Registry),
 	}
 

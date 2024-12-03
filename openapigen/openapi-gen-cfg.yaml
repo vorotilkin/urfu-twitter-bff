@@ -1,0 +1,5 @@
+package: openapigen
+generate:
+  echo-server: true
+  models: true
+output: ./openapigen/gen.go

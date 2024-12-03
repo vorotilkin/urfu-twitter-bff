@@ -13,7 +13,8 @@ import (
 	"time"
 	"twitter-bff/domain/models"
 	"twitter-bff/domain/services"
-	"twitter-bff/server"
+	"twitter-bff/openapigen"
+	"twitter-bff/usecases/decorators"
 )
 
 type EchoServer struct {
@@ -21,6 +22,56 @@ type EchoServer struct {
 	loginSvc          *services.LoginService
 	userByIDService   *services.UserByIDService
 	updateByIDService *services.UpdateUserByIDService
+	postSvc           *services.PostsService
+}
+
+func (s *EchoServer) PostById(echoCtx echo.Context, id int32) error {
+	post, err := s.postSvc.PostByID(context.Background(), id)
+	if err != nil {
+		return echoCtx.JSON(ErrorHandler(err))
+	}
+
+	return echoCtx.JSON(http.StatusOK, decorators.EchoPost(post))
+}
+
+func (s *EchoServer) Posts(echoCtx echo.Context, queryParams openapigen.PostsParams) error {
+	posts, err := s.postSvc.Posts(context.Background(), lo.FromPtr(queryParams.UserId))
+	if err != nil {
+		return echoCtx.JSON(ErrorHandler(err))
+	}
+
+	return echoCtx.JSON(http.StatusOK, decorators.EchoPosts(posts))
+}
+
+func (s *EchoServer) CreatePost(echoCtx echo.Context) error {
+	jUser, err := checkAuth(echoCtx)
+	if err != nil {
+		return echoCtx.JSON(http.StatusUnauthorized, err.Error())
+	}
+
+	var req openapigen.CreatePostJSONBody
+
+	err = echoCtx.Bind(&req)
+	if err != nil {
+		return echoCtx.JSON(http.StatusUnprocessableEntity, err.Error())
+	}
+
+	err = echoCtx.Validate(&req)
+	if err != nil {
+		return echoCtx.JSON(http.StatusUnprocessableEntity, err.Error())
+	}
+
+	ctx := context.Background()
+
+	post, err := s.postSvc.Create(ctx, jUser.UserID, req.Body)
+	if err != nil {
+		if errors.Is(err, models.ErrInvalidArgument) {
+			return echoCtx.JSON(http.StatusUnprocessableEntity, err.Error())
+		}
+		return echoCtx.JSON(http.StatusInternalServerError, err.Error())
+	}
+
+	return echoCtx.JSON(http.StatusCreated, decorators.EchoPost(post))
 }
 
 func (s *EchoServer) UpdateUser(echoCtx echo.Context) error {
@@ -29,7 +80,7 @@ func (s *EchoServer) UpdateUser(echoCtx echo.Context) error {
 		return echoCtx.JSON(http.StatusUnauthorized, err.Error())
 	}
 
-	req := &server.UserUpdateRequest{}
+	req := &openapigen.UserUpdateRequest{}
 
 	err = echoCtx.Bind(req)
 	if err != nil {
@@ -55,12 +106,12 @@ func (s *EchoServer) UpdateUser(echoCtx echo.Context) error {
 		return echoCtx.JSON(http.StatusInternalServerError, err.Error())
 	}
 
-	return echoCtx.JSON(http.StatusOK, toEchoUser(user))
+	return echoCtx.JSON(http.StatusOK, decorators.EchoUser(user))
 }
 
 func (s *EchoServer) ListUsers(echoCtx echo.Context) error {
 	// TODO real data
-	return echoCtx.JSON(http.StatusOK, []server.UserResponse{
+	return echoCtx.JSON(http.StatusOK, []openapigen.UserResponse{
 		{
 			Email:    lo.ToPtr(openapi_types.Email("test1@gmail.com")),
 			Id:       lo.ToPtr(int32(5)),
@@ -107,7 +158,7 @@ func (s *EchoServer) GetCurrentUser(echoCtx echo.Context) error {
 		return echoCtx.JSON(http.StatusInternalServerError, err.Error())
 	}
 
-	return echoCtx.JSON(http.StatusOK, toEchoUser(user))
+	return echoCtx.JSON(http.StatusOK, decorators.EchoUser(user))
 }
 
 func (s *EchoServer) GetUser(echoCtx echo.Context, id int32) error {
@@ -119,11 +170,11 @@ func (s *EchoServer) GetUser(echoCtx echo.Context, id int32) error {
 		return echoCtx.JSON(http.StatusInternalServerError, err.Error())
 	}
 
-	return echoCtx.JSON(http.StatusOK, toEchoUser(user))
+	return echoCtx.JSON(http.StatusOK, decorators.EchoUser(user))
 }
 
 func (s *EchoServer) Login(echoCtx echo.Context) error {
-	req := &server.LoginJSONBody{}
+	req := &openapigen.LoginJSONBody{}
 
 	if err := echoCtx.Bind(req); err != nil {
 		return echoCtx.JSON(http.StatusUnprocessableEntity, err.Error())
@@ -145,13 +196,13 @@ func (s *EchoServer) Login(echoCtx echo.Context) error {
 
 	echoCtx.SetCookie(cookie)
 
-	return echoCtx.JSON(http.StatusOK, server.JWTResponse{
+	return echoCtx.JSON(http.StatusOK, openapigen.JWTResponse{
 		AccessToken: token.Token,
 	})
 }
 
 func (s *EchoServer) CreateUser(echoCtx echo.Context) error {
-	req := &server.UserCreateRequest{}
+	req := &openapigen.UserCreateRequest{}
 
 	err := echoCtx.Bind(req)
 	if err != nil {
@@ -170,7 +221,7 @@ func (s *EchoServer) CreateUser(echoCtx echo.Context) error {
 		return echoCtx.JSON(http.StatusInternalServerError, err.Error())
 	}
 
-	return echoCtx.JSON(http.StatusCreated, toEchoUser(user))
+	return echoCtx.JSON(http.StatusCreated, decorators.EchoUser(user))
 }
 
 func jwtUser(echoCtx echo.Context) (models.JWTUser, error) {
@@ -209,28 +260,18 @@ func checkAuth(echoCtx echo.Context) (models.JWTUser, error) {
 	return jUser, nil
 }
 
-func toEchoUser(user models.User) *server.UserResponse {
-	return &server.UserResponse{
-		Email:        lo.ToPtr(openapi_types.Email(user.Email)),
-		Id:           lo.ToPtr(user.ID),
-		Name:         lo.ToPtr(user.Name),
-		Username:     lo.ToPtr(user.Username),
-		Bio:          lo.ToPtr(user.Bio),
-		ProfileImage: lo.ToPtr(user.ProfileImage),
-		CoverImage:   lo.ToPtr(user.CoverImage),
-	}
-}
-
 func NewEchoServer(
 	createSvc *services.CreateUserService,
 	loginSvc *services.LoginService,
 	currentUserSvc *services.UserByIDService,
 	updateUserSvc *services.UpdateUserByIDService,
+	postSvc *services.PostsService,
 ) *EchoServer {
 	return &EchoServer{
 		createSvc:         createSvc,
 		loginSvc:          loginSvc,
 		userByIDService:   currentUserSvc,
 		updateByIDService: updateUserSvc,
+		postSvc:           postSvc,
 	}
 }

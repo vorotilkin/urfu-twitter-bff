@@ -153,6 +153,75 @@ paths:
 #          description: User deleted successfully
 #        '404':
 #          description: User not found
+  /posts:
+    post:
+      summary: Создание поста
+      operationId: createPost
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [body]
+              properties:
+                body:
+                  type: string
+                  description: Текст поста
+                  example: Всем привет!
+      responses:
+        '200':
+          description: Успешное создание
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Post'
+        '500':
+          description: Internal server error
+        '422':
+          description: Ошибка валидации
+        '401':
+          description: Неавторизованный пользователь
+    get:
+      summary: Получение информации о постах
+      operationId: posts
+      parameters:
+        - name: userId
+          in: query
+          description: ID of the user
+          schema:
+            type: integer
+            format: int32
+      responses:
+        '200':
+          description: Posts
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Post'
+  /posts/{id}:
+    get:
+      summary: Get post by ID
+      operationId: postById
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: ID of the post
+          schema:
+            type: integer
+            format: int32
+      responses:
+        '200':
+          description: Post details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Post'
+        '404':
+          description: Post not found
 
 components:
   schemas:
@@ -230,3 +299,48 @@ components:
         accessToken:
           type: string
           description: JWT access token
+
+    Comment:
+      type: object
+      required: [id, body, createdAt, updatedAt, userId, postId]
+      properties:
+        id:
+          type: integer
+          format: int32
+        body:
+          type: string
+        createdAt:
+          type: string
+          format: date
+        updatedAt:
+          type: string
+          format: date
+        userId:
+          type: string
+        postId:
+          type: string
+
+    Post:
+      type: object
+      required: [id, body, createdAt, updatedAt, userId, likeCount, comments]
+      properties:
+        id:
+          type: integer
+          format: int32
+        body:
+          type: string
+        createdAt:
+          type: string
+          format: date
+        updatedAt:
+          type: string
+          format: date
+        userId:
+          type: string
+        likeCount:
+          type: integer
+          format: int32
+        comments:
+          type: array
+          items:
+            $ref: "#/components/schemas/Comment"
