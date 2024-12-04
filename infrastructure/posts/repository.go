@@ -44,8 +44,8 @@ func (r *Repository) PostsByUserID(ctx context.Context, userID int32) ([]models.
 			Sort: &proto.FilterByOrder{
 				Sort: proto.FilterByOrder_SORT_DESC,
 			},
-			FilterUser: &proto.FilterByUserID{
-				UserId: userID,
+			FilterUsers: &proto.FilterByUserIDs{
+				UserIds: []int32{userID},
 			},
 		},
 	}
@@ -58,11 +58,14 @@ func (r *Repository) PostsByUserID(ctx context.Context, userID int32) ([]models.
 	return hydrators.DomainPosts(response.GetPosts()), nil
 }
 
-func (r *Repository) LatestPosts(ctx context.Context, limit int32) ([]models.Post, error) {
+func (r *Repository) LatestPosts(ctx context.Context, userIDs []int32, currentUserId, limit int32) ([]models.Post, error) {
 	client := proto.NewPostsClient(r.client.Connection())
 
 	req := proto.PostsRequest{
 		Filters: &proto.PostsRequest_Filters{
+			FilterUsers: &proto.FilterByUserIDs{
+				UserIds: userIDs,
+			},
 			Pagination: &proto.FilterByPagination{
 				PerPage: lo.Ternary(limit != 0, limit, 1000),
 			},
@@ -70,6 +73,7 @@ func (r *Repository) LatestPosts(ctx context.Context, limit int32) ([]models.Pos
 				Sort: proto.FilterByOrder_SORT_DESC,
 			},
 		},
+		CurrentUserId: currentUserId,
 	}
 
 	response, err := client.Posts(ctx, &req)
@@ -80,14 +84,14 @@ func (r *Repository) LatestPosts(ctx context.Context, limit int32) ([]models.Pos
 	return hydrators.DomainPosts(response.GetPosts()), nil
 }
 
-func (r *Repository) PostByID(ctx context.Context, postID int32) (models.Post, error) {
+func (r *Repository) PostByID(ctx context.Context, postID int32, userID int32) (models.Post, error) {
 	if postID == 0 {
 		return models.Post{}, errors.Wrap(models.ErrInvalidArgument, "post id = 0")
 	}
 
 	client := proto.NewPostsClient(r.client.Connection())
 
-	req := proto.PostByIDRequest{Id: postID}
+	req := proto.PostByIDRequest{Id: postID, UserId: userID}
 
 	response, err := client.PostByID(ctx, &req)
 	if err != nil {
@@ -114,6 +118,23 @@ func (r *Repository) CommentsByPostID(ctx context.Context, postID int32) ([]mode
 	}
 
 	return hydrators.DomainComments(response.GetComments()), nil
+}
+
+func (r *Repository) Like(ctx context.Context, userID, postID int32, operationType models.LikeType) (bool, error) {
+	client := proto.NewPostsClient(r.client.Connection())
+
+	req := proto.LikeRequest{
+		PostId:        postID,
+		UserId:        userID,
+		OperationType: hydrators.ProtoLikeOperationType(operationType),
+	}
+
+	response, err := client.Like(ctx, &req)
+	if err != nil {
+		return false, err
+	}
+
+	return response.GetOk(), nil
 }
 
 func NewRepository(client *grpc.Client) *Repository {

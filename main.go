@@ -88,6 +88,7 @@ func main() {
 			posts.NewRepository,
 			fx.ParamTags(`name:"postsProvider"`),
 			fx.As(new(services.PostsRepository)),
+			fx.As(new(services.LikeRepository)),
 		)),
 		fx.Provide(services.NewCreateUserService),
 		fx.Provide(services.NewLoginService),
@@ -95,6 +96,7 @@ func main() {
 		fx.Provide(services.NewUpdateUserByIDService),
 		fx.Provide(services.NewPostsService),
 		fx.Provide(services.NewFollowService),
+		fx.Provide(services.NewLikeService),
 		fx.Provide(usecases.NewEchoServer),
 		fx.Invoke(func(lc fx.Lifecycle, server *http.Server) {
 			lc.Append(fx.Hook{

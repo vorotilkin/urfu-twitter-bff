@@ -265,7 +265,44 @@ paths:
                   type: string
       responses:
         '200':
-          description: Successful follow
+          description: Successful unfollow
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+        '401':
+          description: Unauthorized user
+  /like/{postID}:
+    post:
+      summary: Лайк поста
+      operationId: like
+      parameters:
+        - name: postID
+          in: path
+          required: true
+          description: ID of the post
+          schema:
+            type: integer
+            format: int32
+      responses:
+        '201':
+          description: Successful like
+        '401':
+          description: Unauthorized user
+    delete:
+      summary: Процесс отписки от пользователя
+      operationId: dislike
+      parameters:
+        - name: postID
+          in: path
+          required: true
+          description: ID of the post
+          schema:
+            type: integer
+            format: int32
+      responses:
+        '204':
+          description: Successful dislike
           content:
             application/json:
               schema:
@@ -345,6 +382,8 @@ components:
           type: array
           items:
             type: string
+        followersCount:
+          type: integer
 
 
     JWTResponse:
@@ -399,6 +438,8 @@ components:
         likeCount:
           type: integer
           format: int32
+        isCurrentUserLike:
+          type: boolean
         comments:
           type: array
           items:

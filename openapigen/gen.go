@@ -31,14 +31,15 @@ type JWTResponse struct {
 
 // Post defines model for Post.
 type Post struct {
-	Body      string             `json:"body"`
-	Comments  []Comment          `json:"comments"`
-	CreatedAt openapi_types.Date `json:"createdAt"`
-	Id        int32              `json:"id"`
-	LikeCount int32              `json:"likeCount"`
-	UpdatedAt openapi_types.Date `json:"updatedAt"`
-	User      *User              `json:"user,omitempty"`
-	UserId    string             `json:"userId"`
+	Body              string             `json:"body"`
+	Comments          []Comment          `json:"comments"`
+	CreatedAt         openapi_types.Date `json:"createdAt"`
+	Id                int32              `json:"id"`
+	IsCurrentUserLike *bool              `json:"isCurrentUserLike,omitempty"`
+	LikeCount         int32              `json:"likeCount"`
+	UpdatedAt         openapi_types.Date `json:"updatedAt"`
+	User              *User              `json:"user,omitempty"`
+	UserId            string             `json:"userId"`
 }
 
 // User defines model for User.
@@ -47,8 +48,9 @@ type User struct {
 	CoverImage *string `json:"coverImage,omitempty"`
 
 	// Email Email address of the user
-	Email        *openapi_types.Email `json:"email,omitempty"`
-	FollowingIds *[]string            `json:"followingIds,omitempty"`
+	Email          *openapi_types.Email `json:"email,omitempty"`
+	FollowersCount *int                 `json:"followersCount,omitempty"`
+	FollowingIds   *[]string            `json:"followingIds,omitempty"`
 
 	// Id Unique ID of the user
 	Id *int32 `json:"id,omitempty"`
@@ -153,6 +155,12 @@ type ServerInterface interface {
 	// Процесс подписки на пользователя
 	// (POST /follow)
 	Follow(ctx echo.Context) error
+	// Процесс отписки от пользователя
+	// (DELETE /like/{postID})
+	Dislike(ctx echo.Context, postID int32) error
+	// Лайк поста
+	// (POST /like/{postID})
+	Like(ctx echo.Context, postID int32) error
 	// Authenticate user
 	// (POST /login)
 	Login(ctx echo.Context) error
@@ -223,6 +231,38 @@ func (w *ServerInterfaceWrapper) Follow(ctx echo.Context) error {
 
 	// Invoke the callback with all the unmarshaled arguments
 	err = w.Handler.Follow(ctx)
+	return err
+}
+
+// Dislike converts echo context to params.
+func (w *ServerInterfaceWrapper) Dislike(ctx echo.Context) error {
+	var err error
+	// ------------- Path parameter "postID" -------------
+	var postID int32
+
+	err = runtime.BindStyledParameterWithOptions("simple", "postID", ctx.Param("postID"), &postID, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
+	if err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter postID: %s", err))
+	}
+
+	// Invoke the callback with all the unmarshaled arguments
+	err = w.Handler.Dislike(ctx, postID)
+	return err
+}
+
+// Like converts echo context to params.
+func (w *ServerInterfaceWrapper) Like(ctx echo.Context) error {
+	var err error
+	// ------------- Path parameter "postID" -------------
+	var postID int32
+
+	err = runtime.BindStyledParameterWithOptions("simple", "postID", ctx.Param("postID"), &postID, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
+	if err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter postID: %s", err))
+	}
+
+	// Invoke the callback with all the unmarshaled arguments
+	err = w.Handler.Like(ctx, postID)
 	return err
 }
 
@@ -370,6 +410,8 @@ func RegisterHandlersWithBaseURL(router EchoRouter, si ServerInterface, baseURL 
 	router.GET(baseURL+"/comments", wrapper.Comments)
 	router.DELETE(baseURL+"/follow", wrapper.Unfollow)
 	router.POST(baseURL+"/follow", wrapper.Follow)
+	router.DELETE(baseURL+"/like/:postID", wrapper.Dislike)
+	router.POST(baseURL+"/like/:postID", wrapper.Like)
 	router.POST(baseURL+"/login", wrapper.Login)
 	router.POST(baseURL+"/logout", wrapper.Logout)
 	router.GET(baseURL+"/posts", wrapper.Posts)

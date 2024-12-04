@@ -27,5 +27,6 @@ func DomainUser(user *proto.User) models.User {
 		ProfileImage:     user.GetProfileImage(),
 		CoverImage:       user.GetCoverImage(),
 		FollowingUserIds: user.GetFollowingUserIds(),
+		FollowerUserIds:  user.GetFollowerUserIds(),
 	}
 }

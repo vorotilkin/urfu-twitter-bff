@@ -5,8 +5,11 @@ import (
 	"twitter-bff/domain/models"
 )
 
+const defaultUsersLimit = 100
+
 type UserByIDRepository interface {
 	FetchUsersByIDs(ctx context.Context, ids []int32) (map[int32]models.User, error)
+	NewUsers(ctx context.Context, limit int32) ([]models.User, error)
 }
 
 type UserByIDService struct {
@@ -25,6 +28,15 @@ func (s *UserByIDService) UserByID(ctx context.Context, id int32) (models.User, 
 	}
 
 	return user, nil
+}
+
+func (s *UserByIDService) NewUsers(ctx context.Context) ([]models.User, error) {
+	users, err := s.repo.NewUsers(ctx, defaultUsersLimit)
+	if err != nil {
+		return nil, err
+	}
+
+	return users, nil
 }
 
 func NewUserByIDService(repo UserByIDRepository) *UserByIDService {

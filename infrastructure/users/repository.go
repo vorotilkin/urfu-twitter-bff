@@ -67,6 +67,19 @@ func (r *Repository) FetchUsersByIDs(ctx context.Context, ids []int32) (map[int3
 	}), nil
 }
 
+func (r *Repository) NewUsers(ctx context.Context, limit int32) ([]models.User, error) {
+	client := proto.NewUsersClient(r.client.Connection())
+
+	req := proto.NewUsersRequest{Limit: limit}
+
+	response, err := client.NewUsers(ctx, &req)
+	if err != nil {
+		return nil, errors.Wrap(err, "NewUsers")
+	}
+
+	return hydrators.DomainUsers(response.GetUsers()), nil
+}
+
 func (r *Repository) FetchUserByEmail(ctx context.Context, email string) (models.User, error) {
 	client := proto.NewUsersClient(r.client.Connection())
 

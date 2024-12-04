@@ -4,7 +4,6 @@ import (
 	"context"
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/labstack/echo/v4"
-	openapi_types "github.com/oapi-codegen/runtime/types"
 	"github.com/pkg/errors"
 	"github.com/samber/lo"
 	"github.com/samber/mo"
@@ -24,6 +23,35 @@ type EchoServer struct {
 	updateByIDService *services.UpdateUserByIDService
 	postSvc           *services.PostsService
 	followSvc         *services.FollowService
+	likeSvc           *services.LikeService
+}
+
+func (s *EchoServer) Dislike(echoCtx echo.Context, postID int32) error {
+	jUser, err := checkAuth(echoCtx)
+	if err != nil {
+		return echoCtx.JSON(http.StatusUnauthorized, err.Error())
+	}
+
+	_, err = s.likeSvc.Like(context.Background(), jUser.UserID, postID, models.Dislike)
+	if err != nil {
+		return echoCtx.JSON(ErrorHandler(err))
+	}
+
+	return echoCtx.JSON(http.StatusNoContent, nil)
+}
+
+func (s *EchoServer) Like(echoCtx echo.Context, postID int32) error {
+	jUser, err := checkAuth(echoCtx)
+	if err != nil {
+		return echoCtx.JSON(http.StatusUnauthorized, err.Error())
+	}
+
+	_, err = s.likeSvc.Like(context.Background(), jUser.UserID, postID, models.Like)
+	if err != nil {
+		return echoCtx.JSON(ErrorHandler(err))
+	}
+
+	return echoCtx.JSON(http.StatusCreated, nil)
 }
 
 func (s *EchoServer) Unfollow(echoCtx echo.Context) error {
@@ -98,7 +126,8 @@ func (s *EchoServer) Comments(echoCtx echo.Context, params openapigen.CommentsPa
 }
 
 func (s *EchoServer) PostById(echoCtx echo.Context, id int32) error {
-	post, err := s.postSvc.PostByID(context.Background(), id)
+	jUser, _ := checkAuth(echoCtx)
+	post, err := s.postSvc.PostByID(context.Background(), id, jUser.UserID)
 	if err != nil {
 		return echoCtx.JSON(ErrorHandler(err))
 	}
@@ -107,7 +136,26 @@ func (s *EchoServer) PostById(echoCtx echo.Context, id int32) error {
 }
 
 func (s *EchoServer) Posts(echoCtx echo.Context, queryParams openapigen.PostsParams) error {
-	posts, err := s.postSvc.Posts(context.Background(), lo.FromPtr(queryParams.UserId))
+	ctx := context.Background()
+
+	var (
+		posts []models.Post
+		err   error
+	)
+
+	if queryParams.UserId != nil {
+		posts, err = s.postSvc.PostsByUserID(ctx, *queryParams.UserId)
+		if err != nil {
+			return echoCtx.JSON(ErrorHandler(err))
+		}
+	}
+
+	jUser, err := checkAuth(echoCtx)
+	if err != nil {
+		return echoCtx.JSON(http.StatusOK, decorators.EchoPosts(posts))
+	}
+
+	posts, err = s.postSvc.FeedPosts(ctx, jUser.UserID)
 	if err != nil {
 		return echoCtx.JSON(ErrorHandler(err))
 	}
@@ -182,21 +230,12 @@ func (s *EchoServer) UpdateUser(echoCtx echo.Context) error {
 }
 
 func (s *EchoServer) ListUsers(echoCtx echo.Context) error {
-	// TODO real data
-	return echoCtx.JSON(http.StatusOK, []openapigen.User{
-		{
-			Email:    lo.ToPtr(openapi_types.Email("test1@gmail.com")),
-			Id:       lo.ToPtr(int32(5)),
-			Name:     lo.ToPtr("test_name1"),
-			Username: lo.ToPtr("test_username1"),
-		},
-		{
-			Email:    lo.ToPtr(openapi_types.Email("test2@gmail.com")),
-			Id:       lo.ToPtr(int32(10)),
-			Name:     lo.ToPtr("test_name2"),
-			Username: lo.ToPtr("test_username2"),
-		},
-	})
+	users, err := s.userByIDService.NewUsers(context.Background())
+	if err != nil {
+		return echoCtx.JSON(ErrorHandler(err))
+	}
+
+	return echoCtx.JSON(http.StatusOK, decorators.EchoUsers(users))
 }
 
 func (s *EchoServer) Logout(echoCtx echo.Context) error {
@@ -339,6 +378,7 @@ func NewEchoServer(
 	updateUserSvc *services.UpdateUserByIDService,
 	postSvc *services.PostsService,
 	followSvc *services.FollowService,
+	likeSvc *services.LikeService,
 ) *EchoServer {
 	return &EchoServer{
 		createSvc:         createSvc,
@@ -347,5 +387,6 @@ func NewEchoServer(
 		updateByIDService: updateUserSvc,
 		postSvc:           postSvc,
 		followSvc:         followSvc,
+		likeSvc:           likeSvc,
 	}
 }

@@ -12,8 +12,8 @@ const defaultPostLimit = 100
 type PostsRepository interface {
 	Create(ctx context.Context, userID int32, body string) (models.Post, error)
 	PostsByUserID(ctx context.Context, userID int32) ([]models.Post, error)
-	LatestPosts(ctx context.Context, limit int32) ([]models.Post, error)
-	PostByID(ctx context.Context, postID int32) (models.Post, error)
+	LatestPosts(ctx context.Context, userIDs []int32, currentUserId, limit int32) ([]models.Post, error)
+	PostByID(ctx context.Context, postID int32, userID int32) (models.Post, error)
 	CommentsByPostID(ctx context.Context, postID int32) ([]models.Comment, error)
 }
 
@@ -50,18 +50,12 @@ func (s *PostsService) Create(ctx context.Context, userID int32, body string) (m
 	return post, nil
 }
 
-func (s *PostsService) Posts(ctx context.Context, userID int32) ([]models.Post, error) {
-	var (
-		posts []models.Post
-		err   error
-	)
-
+func (s *PostsService) PostsByUserID(ctx context.Context, userID int32) ([]models.Post, error) {
 	if userID == 0 {
-		posts, err = s.repo.LatestPosts(ctx, defaultPostLimit)
-	} else {
-		posts, err = s.repo.PostsByUserID(ctx, userID)
+		return nil, errors.Wrap(models.ErrInvalidArgument, "invalid user id")
 	}
 
+	posts, err := s.repo.PostsByUserID(ctx, userID)
 	if err != nil {
 		return nil, errors.Wrap(err, "get posts err")
 	}
@@ -90,12 +84,56 @@ func (s *PostsService) Posts(ctx context.Context, userID int32) ([]models.Post, 
 	return posts, nil
 }
 
-func (s *PostsService) PostByID(ctx context.Context, postID int32) (models.Post, error) {
+func (s *PostsService) FeedPosts(ctx context.Context, userID int32) ([]models.Post, error) {
+	if userID == 0 {
+		return []models.Post{}, nil
+	}
+
+	users, err := s.usersRepo.FetchUsersByIDs(ctx, []int32{userID})
+	if err != nil {
+		return nil, errors.Wrap(err, "get current user err")
+	}
+
+	currentUser, ok := users[userID]
+	if !ok {
+		return nil, errors.Wrap(models.ErrNotFound, "current user not found")
+	}
+
+	userIDs := make([]int32, len(currentUser.FollowingUserIds), len(currentUser.FollowingUserIds)+1)
+	copy(userIDs, currentUser.FollowingUserIds)
+	userIDs = append(userIDs, userID)
+
+	posts, err := s.repo.LatestPosts(ctx, userIDs, userID, defaultPostLimit)
+	if err != nil {
+		return nil, errors.Wrap(err, "feed posts err")
+	}
+
+	users, err = s.usersRepo.FetchUsersByIDs(ctx, userIDs)
+	if err != nil {
+		return nil, errors.Wrap(err, "get current user err")
+	}
+
+	for i, post := range posts {
+		user := users[post.UserID]
+		u := models.User{
+			ID:       user.ID,
+			Name:     user.Name,
+			Username: user.Username,
+			Email:    user.Email,
+		}
+
+		posts[i].User = u
+	}
+
+	return posts, nil
+}
+
+func (s *PostsService) PostByID(ctx context.Context, postID int32, userID int32) (models.Post, error) {
 	if postID == 0 {
 		return models.Post{}, errors.Wrap(models.ErrInvalidArgument, "invalid post id")
 	}
 
-	post, err := s.repo.PostByID(ctx, postID)
+	post, err := s.repo.PostByID(ctx, postID, userID)
 	if err != nil {
 		return models.Post{}, errors.Wrap(err, "posts repo err")
 	}

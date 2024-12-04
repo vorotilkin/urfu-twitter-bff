@@ -18,12 +18,13 @@ func DomainPost(post *proto.Post) models.Post {
 	}
 
 	return models.Post{
-		ID:        post.GetId(),
-		Body:      post.GetBody(),
-		CreatedAt: post.GetCreatedAt().AsTime(),
-		UpdatedAt: post.GetUpdatedAt().AsTime(),
-		UserID:    post.GetUserId(),
-		LikeCount: post.GetLikeCounter(),
-		Comments:  DomainComments(post.GetComments()),
+		ID:                post.GetId(),
+		Body:              post.GetBody(),
+		CreatedAt:         post.GetCreatedAt().AsTime(),
+		UpdatedAt:         post.GetUpdatedAt().AsTime(),
+		UserID:            post.GetUserId(),
+		LikeCount:         post.GetLikeCounter(),
+		Comments:          DomainComments(post.GetComments()),
+		IsCurrentUserLike: post.GetIsCurrentUserLike(),
 	}
 }
