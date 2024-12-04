@@ -40,6 +40,13 @@ func (s *PostsService) Create(ctx context.Context, userID int32, body string) (m
 		return models.Post{}, errors.Wrap(err, "create repo err")
 	}
 
+	usersByID, err := s.usersRepo.FetchUsersByIDs(ctx, []int32{userID})
+	if err != nil {
+		return models.Post{}, errors.Wrap(err, "get users err")
+	}
+
+	post.User = usersByID[userID]
+
 	return post, nil
 }
 
@@ -91,6 +98,47 @@ func (s *PostsService) PostByID(ctx context.Context, postID int32) (models.Post,
 	post, err := s.repo.PostByID(ctx, postID)
 	if err != nil {
 		return models.Post{}, errors.Wrap(err, "posts repo err")
+	}
+
+	userIDs := make([]int32, 0, len(post.Comments)+1)
+	seen := make(map[int32]struct{}, len(post.Comments)+1)
+
+	userIDs = append(userIDs, post.UserID)
+	seen[post.UserID] = struct{}{}
+
+	for _, comment := range post.Comments {
+		if _, ok := seen[comment.ID]; ok {
+			continue
+		}
+		userIDs = append(userIDs, comment.UserID)
+		seen[comment.ID] = struct{}{}
+	}
+
+	usersByID, err := s.usersRepo.FetchUsersByIDs(ctx, userIDs)
+	if err != nil {
+		return models.Post{}, errors.Wrap(err, "get users err")
+	}
+
+	user := usersByID[post.UserID]
+	u := models.User{
+		ID:       user.ID,
+		Name:     user.Name,
+		Username: user.Username,
+		Email:    user.Email,
+	}
+
+	post.User = u
+
+	for i, comment := range post.Comments {
+		user := usersByID[comment.UserID]
+		u := models.User{
+			ID:       user.ID,
+			Name:     user.Name,
+			Username: user.Username,
+			Email:    user.Email,
+		}
+
+		post.Comments[i].User = u
 	}
 
 	return post, nil

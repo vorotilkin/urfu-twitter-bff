@@ -21,6 +21,7 @@ func EchoComment(comment models.Comment) openapigen.Comment {
 		Id:        comment.ID,
 		UpdatedAt: types.Date{Time: comment.UpdatedAt},
 		UserId:    fmt.Sprint(comment.UserID),
+		User:      EchoUser(comment.User),
 		PostId:    fmt.Sprint(comment.PostID),
 	}
 }

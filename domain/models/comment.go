@@ -9,4 +9,5 @@ type Comment struct {
 	UpdatedAt time.Time
 	UserID    int32
 	PostID    int32
+	User      User
 }

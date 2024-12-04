@@ -241,8 +241,7 @@ paths:
               type: object
               properties:
                 userId:
-                  type: integer
-                  format: int32
+                  type: string
       responses:
         '200':
           description: Successful follow
@@ -263,8 +262,7 @@ paths:
               type: object
               properties:
                 userId:
-                  type: integer
-                  format: int32
+                  type: string
       responses:
         '200':
           description: Successful follow
@@ -346,8 +344,7 @@ components:
         followingIds:
           type: array
           items:
-            type: integer
-            format: int32
+            type: string
 
 
     JWTResponse:
@@ -375,6 +372,8 @@ components:
           format: date
         userId:
           type: string
+        user:
+          $ref: "#/components/schemas/User"
         postId:
           type: string
 

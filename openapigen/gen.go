@@ -19,6 +19,7 @@ type Comment struct {
 	Id        int32              `json:"id"`
 	PostId    string             `json:"postId"`
 	UpdatedAt openapi_types.Date `json:"updatedAt"`
+	User      *User              `json:"user,omitempty"`
 	UserId    string             `json:"userId"`
 }
 
@@ -47,7 +48,7 @@ type User struct {
 
 	// Email Email address of the user
 	Email        *openapi_types.Email `json:"email,omitempty"`
-	FollowingIds *[]int32             `json:"followingIds,omitempty"`
+	FollowingIds *[]string            `json:"followingIds,omitempty"`
 
 	// Id Unique ID of the user
 	Id *int32 `json:"id,omitempty"`
@@ -97,12 +98,12 @@ type CommentsParams struct {
 
 // UnfollowJSONBody defines parameters for Unfollow.
 type UnfollowJSONBody struct {
-	UserId *int32 `json:"userId,omitempty"`
+	UserId *string `json:"userId,omitempty"`
 }
 
 // FollowJSONBody defines parameters for Follow.
 type FollowJSONBody struct {
-	UserId *int32 `json:"userId,omitempty"`
+	UserId *string `json:"userId,omitempty"`
 }
 
 // LoginJSONBody defines parameters for Login.

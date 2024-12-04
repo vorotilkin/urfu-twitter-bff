@@ -44,7 +44,12 @@ func (s *EchoServer) Unfollow(echoCtx echo.Context) error {
 		return echoCtx.JSON(http.StatusUnprocessableEntity, err.Error())
 	}
 
-	user, err := s.followSvc.Unfollow(context.Background(), jUser.UserID, lo.FromPtr(req.UserId))
+	userID, err := strconv.ParseInt(lo.FromPtr(req.UserId), 10, 32)
+	if err != nil {
+		return echo.NewHTTPError(http.StatusUnprocessableEntity, err.Error())
+	}
+
+	user, err := s.followSvc.Unfollow(context.Background(), jUser.UserID, int32(userID))
 	if err != nil {
 		return echoCtx.JSON(ErrorHandler(err))
 	}
@@ -70,7 +75,12 @@ func (s *EchoServer) Follow(echoCtx echo.Context) error {
 		return echoCtx.JSON(http.StatusUnprocessableEntity, err.Error())
 	}
 
-	user, err := s.followSvc.Follow(context.Background(), jUser.UserID, lo.FromPtr(req.UserId))
+	userID, err := strconv.ParseInt(lo.FromPtr(req.UserId), 10, 32)
+	if err != nil {
+		return echo.NewHTTPError(http.StatusUnprocessableEntity, err.Error())
+	}
+
+	user, err := s.followSvc.Follow(context.Background(), jUser.UserID, int32(userID))
 	if err != nil {
 		return echoCtx.JSON(ErrorHandler(err))
 	}
