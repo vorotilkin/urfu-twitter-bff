@@ -16,5 +16,6 @@ func EchoUser(user models.User) *openapigen.User {
 		Bio:          lo.ToPtr(user.Bio),
 		ProfileImage: lo.ToPtr(user.ProfileImage),
 		CoverImage:   lo.ToPtr(user.CoverImage),
+		FollowingIds: lo.Ternary(len(user.FollowingUserIds) != 0, &user.FollowingUserIds, nil),
 	}
 }

@@ -23,6 +23,59 @@ type EchoServer struct {
 	userByIDService   *services.UserByIDService
 	updateByIDService *services.UpdateUserByIDService
 	postSvc           *services.PostsService
+	followSvc         *services.FollowService
+}
+
+func (s *EchoServer) Unfollow(echoCtx echo.Context) error {
+	jUser, err := checkAuth(echoCtx)
+	if err != nil {
+		return echoCtx.JSON(http.StatusUnauthorized, err.Error())
+	}
+
+	var req openapigen.UnfollowJSONBody
+
+	err = echoCtx.Bind(&req)
+	if err != nil {
+		return echoCtx.JSON(http.StatusUnprocessableEntity, err.Error())
+	}
+
+	err = echoCtx.Validate(&req)
+	if err != nil {
+		return echoCtx.JSON(http.StatusUnprocessableEntity, err.Error())
+	}
+
+	user, err := s.followSvc.Unfollow(context.Background(), jUser.UserID, lo.FromPtr(req.UserId))
+	if err != nil {
+		return echoCtx.JSON(ErrorHandler(err))
+	}
+
+	return echoCtx.JSON(http.StatusOK, decorators.EchoUser(user))
+}
+
+func (s *EchoServer) Follow(echoCtx echo.Context) error {
+	jUser, err := checkAuth(echoCtx)
+	if err != nil {
+		return echoCtx.JSON(http.StatusUnauthorized, err.Error())
+	}
+
+	var req openapigen.FollowJSONBody
+
+	err = echoCtx.Bind(&req)
+	if err != nil {
+		return echoCtx.JSON(http.StatusUnprocessableEntity, err.Error())
+	}
+
+	err = echoCtx.Validate(&req)
+	if err != nil {
+		return echoCtx.JSON(http.StatusUnprocessableEntity, err.Error())
+	}
+
+	user, err := s.followSvc.Follow(context.Background(), jUser.UserID, lo.FromPtr(req.UserId))
+	if err != nil {
+		return echoCtx.JSON(ErrorHandler(err))
+	}
+
+	return echoCtx.JSON(http.StatusOK, decorators.EchoUser(user))
 }
 
 func (s *EchoServer) Comments(echoCtx echo.Context, params openapigen.CommentsParams) error {
@@ -275,6 +328,7 @@ func NewEchoServer(
 	currentUserSvc *services.UserByIDService,
 	updateUserSvc *services.UpdateUserByIDService,
 	postSvc *services.PostsService,
+	followSvc *services.FollowService,
 ) *EchoServer {
 	return &EchoServer{
 		createSvc:         createSvc,
@@ -282,5 +336,6 @@ func NewEchoServer(
 		userByIDService:   currentUserSvc,
 		updateByIDService: updateUserSvc,
 		postSvc:           postSvc,
+		followSvc:         followSvc,
 	}
 }

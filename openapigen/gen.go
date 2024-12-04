@@ -46,7 +46,8 @@ type User struct {
 	CoverImage *string `json:"coverImage,omitempty"`
 
 	// Email Email address of the user
-	Email *openapi_types.Email `json:"email,omitempty"`
+	Email        *openapi_types.Email `json:"email,omitempty"`
+	FollowingIds *[]int32             `json:"followingIds,omitempty"`
 
 	// Id Unique ID of the user
 	Id *int32 `json:"id,omitempty"`
@@ -94,6 +95,16 @@ type CommentsParams struct {
 	PostId *int32 `form:"postId,omitempty" json:"postId,omitempty"`
 }
 
+// UnfollowJSONBody defines parameters for Unfollow.
+type UnfollowJSONBody struct {
+	UserId *int32 `json:"userId,omitempty"`
+}
+
+// FollowJSONBody defines parameters for Follow.
+type FollowJSONBody struct {
+	UserId *int32 `json:"userId,omitempty"`
+}
+
 // LoginJSONBody defines parameters for Login.
 type LoginJSONBody struct {
 	Email    *openapi_types.Email `json:"email,omitempty"`
@@ -112,6 +123,12 @@ type CreatePostJSONBody struct {
 	Body string `json:"body"`
 }
 
+// UnfollowJSONRequestBody defines body for Unfollow for application/json ContentType.
+type UnfollowJSONRequestBody UnfollowJSONBody
+
+// FollowJSONRequestBody defines body for Follow for application/json ContentType.
+type FollowJSONRequestBody FollowJSONBody
+
 // LoginJSONRequestBody defines body for Login for application/json ContentType.
 type LoginJSONRequestBody LoginJSONBody
 
@@ -129,6 +146,12 @@ type ServerInterface interface {
 	// Получение информации о комментариях к посту
 	// (GET /comments)
 	Comments(ctx echo.Context, params CommentsParams) error
+	// Процесс отписки от пользователя
+	// (DELETE /follow)
+	Unfollow(ctx echo.Context) error
+	// Процесс подписки на пользователя
+	// (POST /follow)
+	Follow(ctx echo.Context) error
 	// Authenticate user
 	// (POST /login)
 	Login(ctx echo.Context) error
@@ -181,6 +204,24 @@ func (w *ServerInterfaceWrapper) Comments(ctx echo.Context) error {
 
 	// Invoke the callback with all the unmarshaled arguments
 	err = w.Handler.Comments(ctx, params)
+	return err
+}
+
+// Unfollow converts echo context to params.
+func (w *ServerInterfaceWrapper) Unfollow(ctx echo.Context) error {
+	var err error
+
+	// Invoke the callback with all the unmarshaled arguments
+	err = w.Handler.Unfollow(ctx)
+	return err
+}
+
+// Follow converts echo context to params.
+func (w *ServerInterfaceWrapper) Follow(ctx echo.Context) error {
+	var err error
+
+	// Invoke the callback with all the unmarshaled arguments
+	err = w.Handler.Follow(ctx)
 	return err
 }
 
@@ -326,6 +367,8 @@ func RegisterHandlersWithBaseURL(router EchoRouter, si ServerInterface, baseURL 
 	}
 
 	router.GET(baseURL+"/comments", wrapper.Comments)
+	router.DELETE(baseURL+"/follow", wrapper.Unfollow)
+	router.POST(baseURL+"/follow", wrapper.Follow)
 	router.POST(baseURL+"/login", wrapper.Login)
 	router.POST(baseURL+"/logout", wrapper.Logout)
 	router.GET(baseURL+"/posts", wrapper.Posts)

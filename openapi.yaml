@@ -229,6 +229,51 @@ paths:
                   $ref: '#/components/schemas/Comment'
         '404':
           description: Post not found
+  /follow:
+    post:
+      summary: Процесс подписки на пользователя
+      operationId: follow
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                userId:
+                  type: integer
+                  format: int32
+      responses:
+        '200':
+          description: Successful follow
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+        '401':
+          description: Unauthorized user
+    delete:
+      summary: Процесс отписки от пользователя
+      operationId: unfollow
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                userId:
+                  type: integer
+                  format: int32
+      responses:
+        '200':
+          description: Successful follow
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+        '401':
+          description: Unauthorized user
 
 components:
   schemas:
@@ -298,6 +343,12 @@ components:
           type: string
         coverImage:
           type: string
+        followingIds:
+          type: array
+          items:
+            type: integer
+            format: int32
+
 
     JWTResponse:
       type: object

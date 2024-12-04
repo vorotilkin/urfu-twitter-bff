@@ -3,14 +3,15 @@ package models
 import "github.com/samber/mo"
 
 type User struct {
-	ID           int32
-	Name         string
-	PasswordHash string
-	Username     string
-	Email        string
-	Bio          string
-	ProfileImage string
-	CoverImage   string
+	ID               int32
+	Name             string
+	PasswordHash     string
+	Username         string
+	Email            string
+	Bio              string
+	ProfileImage     string
+	CoverImage       string
+	FollowingUserIds []int32
 }
 
 type UserOption struct {

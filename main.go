@@ -82,6 +82,7 @@ func main() {
 			fx.As(new(services.UserByIDRepository)),
 			fx.As(new(services.UpdateUserByIDRepository)),
 			fx.As(new(services.PostsUsersByIDsRepository)),
+			fx.As(new(services.FollowRepository)),
 		)),
 		fx.Provide(fx.Annotate(
 			posts.NewRepository,
@@ -93,6 +94,7 @@ func main() {
 		fx.Provide(services.NewUserByIDService),
 		fx.Provide(services.NewUpdateUserByIDService),
 		fx.Provide(services.NewPostsService),
+		fx.Provide(services.NewFollowService),
 		fx.Provide(usecases.NewEchoServer),
 		fx.Invoke(func(lc fx.Lifecycle, server *http.Server) {
 			lc.Append(fx.Hook{

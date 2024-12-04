@@ -16,6 +16,38 @@ type Repository struct {
 	client *grpc.Client
 }
 
+func (r *Repository) Follow(ctx context.Context, userID, targetUserID int32) (bool, error) {
+	client := proto.NewUsersClient(r.client.Connection())
+	req := proto.FollowRequest{
+		UserId:        userID,
+		TargetUserId:  targetUserID,
+		OperationType: proto.FollowRequest_OPERATION_TYPE_FOLLOW_UNSPECIFIED,
+	}
+
+	response, err := client.Follow(ctx, &req)
+	if err != nil {
+		return false, err
+	}
+
+	return response.GetOk(), nil
+}
+
+func (r *Repository) Unfollow(ctx context.Context, userID, targetUserID int32) (bool, error) {
+	client := proto.NewUsersClient(r.client.Connection())
+	req := proto.FollowRequest{
+		UserId:        userID,
+		TargetUserId:  targetUserID,
+		OperationType: proto.FollowRequest_OPERATION_TYPE_UNFOLLOW,
+	}
+
+	response, err := client.Follow(ctx, &req)
+	if err != nil {
+		return false, err
+	}
+
+	return response.GetOk(), nil
+}
+
 func (r *Repository) FetchUsersByIDs(ctx context.Context, ids []int32) (map[int32]models.User, error) {
 	client := proto.NewUsersClient(r.client.Connection())
 

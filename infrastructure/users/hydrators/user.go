@@ -18,13 +18,14 @@ func DomainUser(user *proto.User) models.User {
 	}
 
 	return models.User{
-		ID:           user.GetId(),
-		Name:         user.GetName(),
-		PasswordHash: user.GetPasswordHash(),
-		Username:     user.GetUsername(),
-		Email:        user.GetEmail(),
-		Bio:          user.GetBio(),
-		ProfileImage: user.GetProfileImage(),
-		CoverImage:   user.GetCoverImage(),
+		ID:               user.GetId(),
+		Name:             user.GetName(),
+		PasswordHash:     user.GetPasswordHash(),
+		Username:         user.GetUsername(),
+		Email:            user.GetEmail(),
+		Bio:              user.GetBio(),
+		ProfileImage:     user.GetProfileImage(),
+		CoverImage:       user.GetCoverImage(),
+		FollowingUserIds: user.GetFollowingUserIds(),
 	}
 }
