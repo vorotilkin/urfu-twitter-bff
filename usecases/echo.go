@@ -148,6 +148,8 @@ func (s *EchoServer) Posts(echoCtx echo.Context, queryParams openapigen.PostsPar
 		if err != nil {
 			return echoCtx.JSON(ErrorHandler(err))
 		}
+
+		return echoCtx.JSON(http.StatusOK, decorators.EchoPosts(posts))
 	}
 
 	jUser, err := checkAuth(echoCtx)

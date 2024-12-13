@@ -60,6 +60,10 @@ func (s *PostsService) PostsByUserID(ctx context.Context, userID int32) ([]model
 		return nil, errors.Wrap(err, "get posts err")
 	}
 
+	if len(posts) == 0 {
+		return []models.Post{}, nil
+	}
+
 	userIDs := lo.Uniq(lo.Map(posts, func(post models.Post, _ int) int32 {
 		return post.UserID
 	}))
