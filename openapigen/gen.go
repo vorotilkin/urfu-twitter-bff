@@ -126,6 +126,12 @@ type CreatePostJSONBody struct {
 	Body string `json:"body"`
 }
 
+// LoginV2JSONBody defines parameters for LoginV2.
+type LoginV2JSONBody struct {
+	Password *string `json:"password,omitempty"`
+	Username *string `json:"username,omitempty"`
+}
+
 // UnfollowJSONRequestBody defines body for Unfollow for application/json ContentType.
 type UnfollowJSONRequestBody UnfollowJSONBody
 
@@ -144,53 +150,59 @@ type CreateUserJSONRequestBody = UserCreateRequest
 // UpdateUserJSONRequestBody defines body for UpdateUser for application/json ContentType.
 type UpdateUserJSONRequestBody = UserUpdateRequest
 
+// LoginV2JSONRequestBody defines body for LoginV2 for application/json ContentType.
+type LoginV2JSONRequestBody LoginV2JSONBody
+
 // ServerInterface represents all server handlers.
 type ServerInterface interface {
 	// Получение информации о комментариях к посту
-	// (GET /comments)
+	// (GET /v1/comments)
 	Comments(ctx echo.Context, params CommentsParams) error
 	// Процесс отписки от пользователя
-	// (DELETE /follow)
+	// (DELETE /v1/follow)
 	Unfollow(ctx echo.Context) error
 	// Процесс подписки на пользователя
-	// (POST /follow)
+	// (POST /v1/follow)
 	Follow(ctx echo.Context) error
 	// Процесс отписки от пользователя
-	// (DELETE /like/{postID})
+	// (DELETE /v1/like/{postID})
 	Dislike(ctx echo.Context, postID int32) error
 	// Лайк поста
-	// (POST /like/{postID})
+	// (POST /v1/like/{postID})
 	Like(ctx echo.Context, postID int32) error
-	// Authenticate user
-	// (POST /login)
+	// Аутентификация пользователя
+	// (POST /v1/login)
 	Login(ctx echo.Context) error
 	// Logout user
-	// (POST /logout)
+	// (POST /v1/logout)
 	Logout(ctx echo.Context) error
 	// Получение информации о постах
-	// (GET /posts)
+	// (GET /v1/posts)
 	Posts(ctx echo.Context, params PostsParams) error
 	// Создание поста
-	// (POST /posts)
+	// (POST /v1/posts)
 	CreatePost(ctx echo.Context) error
 	// Get post by ID
-	// (GET /posts/{id})
+	// (GET /v1/posts/{id})
 	PostById(ctx echo.Context, id int32) error
-	// Create a new user
-	// (POST /register)
+	// Регистрация нового пользователя
+	// (POST /v1/register)
 	CreateUser(ctx echo.Context) error
 	// List all users
-	// (GET /users)
+	// (GET /v1/users)
 	ListUsers(ctx echo.Context) error
 	// Get current user details
-	// (GET /users/current)
+	// (GET /v1/users/current)
 	GetCurrentUser(ctx echo.Context) error
 	// Update user
-	// (PUT /users/current)
+	// (PUT /v1/users/current)
 	UpdateUser(ctx echo.Context) error
 	// Get user by ID
-	// (GET /users/{id})
+	// (GET /v1/users/{id})
 	GetUser(ctx echo.Context, id int32) error
+	// Тестовая аутентификация пользователя
+	// (POST /v2/login)
+	LoginV2(ctx echo.Context) error
 }
 
 // ServerInterfaceWrapper converts echo contexts to parameters.
@@ -379,6 +391,15 @@ func (w *ServerInterfaceWrapper) GetUser(ctx echo.Context) error {
 	return err
 }
 
+// LoginV2 converts echo context to params.
+func (w *ServerInterfaceWrapper) LoginV2(ctx echo.Context) error {
+	var err error
+
+	// Invoke the callback with all the unmarshaled arguments
+	err = w.Handler.LoginV2(ctx)
+	return err
+}
+
 // This is a simple interface which specifies echo.Route addition functions which
 // are present on both echo.Echo and echo.Group, since we want to allow using
 // either of them for path registration
@@ -407,20 +428,21 @@ func RegisterHandlersWithBaseURL(router EchoRouter, si ServerInterface, baseURL 
 		Handler: si,
 	}
 
-	router.GET(baseURL+"/comments", wrapper.Comments)
-	router.DELETE(baseURL+"/follow", wrapper.Unfollow)
-	router.POST(baseURL+"/follow", wrapper.Follow)
-	router.DELETE(baseURL+"/like/:postID", wrapper.Dislike)
-	router.POST(baseURL+"/like/:postID", wrapper.Like)
-	router.POST(baseURL+"/login", wrapper.Login)
-	router.POST(baseURL+"/logout", wrapper.Logout)
-	router.GET(baseURL+"/posts", wrapper.Posts)
-	router.POST(baseURL+"/posts", wrapper.CreatePost)
-	router.GET(baseURL+"/posts/:id", wrapper.PostById)
-	router.POST(baseURL+"/register", wrapper.CreateUser)
-	router.GET(baseURL+"/users", wrapper.ListUsers)
-	router.GET(baseURL+"/users/current", wrapper.GetCurrentUser)
-	router.PUT(baseURL+"/users/current", wrapper.UpdateUser)
-	router.GET(baseURL+"/users/:id", wrapper.GetUser)
+	router.GET(baseURL+"/v1/comments", wrapper.Comments)
+	router.DELETE(baseURL+"/v1/follow", wrapper.Unfollow)
+	router.POST(baseURL+"/v1/follow", wrapper.Follow)
+	router.DELETE(baseURL+"/v1/like/:postID", wrapper.Dislike)
+	router.POST(baseURL+"/v1/like/:postID", wrapper.Like)
+	router.POST(baseURL+"/v1/login", wrapper.Login)
+	router.POST(baseURL+"/v1/logout", wrapper.Logout)
+	router.GET(baseURL+"/v1/posts", wrapper.Posts)
+	router.POST(baseURL+"/v1/posts", wrapper.CreatePost)
+	router.GET(baseURL+"/v1/posts/:id", wrapper.PostById)
+	router.POST(baseURL+"/v1/register", wrapper.CreateUser)
+	router.GET(baseURL+"/v1/users", wrapper.ListUsers)
+	router.GET(baseURL+"/v1/users/current", wrapper.GetCurrentUser)
+	router.PUT(baseURL+"/v1/users/current", wrapper.UpdateUser)
+	router.GET(baseURL+"/v1/users/:id", wrapper.GetUser)
+	router.POST(baseURL+"/v2/login", wrapper.LoginV2)
 
 }

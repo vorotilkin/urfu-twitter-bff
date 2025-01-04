@@ -127,7 +127,7 @@ func NewServer(config Config, v *validator.Validate, logger *zap.Logger) *Server
 		HandleError: true,
 	}))
 	s.Use(middleware.Recover())
-	s.Use(JwtCookieMiddleware(config.SecretKey, "/api/login", "/api/register"))
+	s.Use(JwtCookieMiddleware(config.SecretKey, "/api/v1/login", "/api/v1/register"))
 	s.Validator = &customValidator{validator: v}
 
 	return &Server{

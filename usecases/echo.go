@@ -26,6 +26,10 @@ type EchoServer struct {
 	likeSvc           *services.LikeService
 }
 
+func (s *EchoServer) LoginV2(ctx echo.Context) error {
+	return ctx.JSON(http.StatusOK, "test login v2")
+}
+
 func (s *EchoServer) Dislike(echoCtx echo.Context, postID int32) error {
 	jUser, err := checkAuth(echoCtx)
 	if err != nil {

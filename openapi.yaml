@@ -1,20 +1,20 @@
 openapi: 3.0.0
 info:
-  title: User Management API
-  description: API for managing user accounts (CRUD operations).
+  title: Twitter API
+  description: API для получения информации для frontend Twitter.
   version: 1.0.0
 
 servers:
   - url: http://localhost:8080/api
-    description: Local server
+    description: Локальный сервер для тестирования
 
 paths:
-  /register:
+  /v1/register:
     post:
-      summary: Create a new user
+      summary: Регистрация нового пользователя
       operationId: createUser
       requestBody:
-        description: Data for creating a new user
+        description: Данные для создания нового пользователя
         required: true
         content:
           application/json:
@@ -22,18 +22,19 @@ paths:
               $ref: '#/components/schemas/UserCreateRequest'
       responses:
         '201':
-          description: User created successfully
+          description: Пользователь успешно создан
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/User'
         '400':
-          description: Invalid input
-  /login:
+          description: Ошибка валидации входных данных
+  /v1/login:
     post:
-      summary: Authenticate user
+      summary: Аутентификация пользователя
       operationId: login
       requestBody:
+        description: Учетные данные пользователя для входа в систему
         required: true
         content:
           application/json:
@@ -50,14 +51,42 @@ paths:
                   example: password123
       responses:
         '200':
-          description: Successful login
+          description: Успешная аутентификация
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/JWTResponse'
         '401':
-          description: Invalid credentials
-  /logout:
+          description: Неверные учетные данные
+  /v2/login:
+    post:
+      summary: Тестовая аутентификация пользователя
+      operationId: loginV2
+      requestBody:
+        description: Учетные данные пользователя для тестового входа
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                username:
+                  type: string
+                  example: user1234
+                password:
+                  type: string
+                  format: password
+                  example: password123
+      responses:
+        '200':
+          description: Успешная тестовая аутентификация
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/JWTResponse'
+        '401':
+          description: Неверные учетные данные
+  /v1/logout:
     post:
       summary: Logout user
       operationId: logout
@@ -66,7 +95,7 @@ paths:
           description: Successful logout
         '401':
           description: Unauthorized user
-  /users/current:
+  /v1/users/current:
     get:
       summary: Get current user details
       operationId: getCurrentUser
@@ -103,7 +132,7 @@ paths:
         '401':
           description: Unauthorized (user is not authenticated)
 
-  /users:
+  /v1/users:
     get:
       summary: List all users
       operationId: listUsers
@@ -117,7 +146,7 @@ paths:
                 items:
                   $ref: '#/components/schemas/User'
 
-  /users/{id}:
+  /v1/users/{id}:
     get:
       summary: Get user by ID
       operationId: getUser
@@ -138,7 +167,7 @@ paths:
                 $ref: '#/components/schemas/User'
         '404':
           description: User not found
-  /posts:
+  /v1/posts:
     post:
       summary: Создание поста
       operationId: createPost
@@ -186,7 +215,7 @@ paths:
                 type: array
                 items:
                   $ref: '#/components/schemas/Post'
-  /posts/{id}:
+  /v1/posts/{id}:
     get:
       summary: Get post by ID
       operationId: postById
@@ -207,7 +236,7 @@ paths:
                 $ref: '#/components/schemas/Post'
         '404':
           description: Post not found
-  /comments:
+  /v1/comments:
     get:
       summary: Получение информации о комментариях к посту
       operationId: comments
@@ -229,7 +258,7 @@ paths:
                   $ref: '#/components/schemas/Comment'
         '404':
           description: Post not found
-  /follow:
+  /v1/follow:
     post:
       summary: Процесс подписки на пользователя
       operationId: follow
@@ -272,7 +301,7 @@ paths:
                 $ref: '#/components/schemas/User'
         '401':
           description: Unauthorized user
-  /like/{postID}:
+  /v1/like/{postID}:
     post:
       summary: Лайк поста
       operationId: like
